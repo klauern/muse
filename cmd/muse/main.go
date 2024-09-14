@@ -5,9 +5,9 @@ import (
 	"log"
 	"os"
 
-	"github.com/urfave/cli/v2"
-	"github.com/klauern/pre-commit-llm"
 	"github.com/klauern/pre-commit-llm/cmd"
+	"github.com/klauern/pre-commit-llm/cmd/muse"
+	"github.com/urfave/cli/v2"
 )
 
 func main() {
