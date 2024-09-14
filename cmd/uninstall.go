@@ -5,11 +5,11 @@ import (
 	"os"
 	"path/filepath"
 
+	"github.com/klauern/pre-commit-llm/config"
 	"github.com/urfave/cli/v2"
-	"github.com/klauern/pre-commit-llm"
 )
 
-func NewUninstallCmd(config *muse.Config) *cli.Command {
+func NewUninstallCmd(config *config.Config) *cli.Command {
 	return &cli.Command{
 		Name:  "uninstall",
 		Usage: "Uninstall the prepare-commit-msg hook",
@@ -19,14 +19,14 @@ func NewUninstallCmd(config *muse.Config) *cli.Command {
 	}
 }
 
-func uninstallHook(config *muse.Config) error {
+func uninstallHook(config *config.Config) error {
 	gitDir, err := findGitDir()
 	if err != nil {
 		return fmt.Errorf("failed to find .git directory: %w", err)
 	}
 
 	hookPath := filepath.Join(gitDir, "hooks", "prepare-commit-msg")
-	
+
 	// Check if hook exists
 	if _, err := os.Stat(hookPath); os.IsNotExist(err) {
 		return fmt.Errorf("prepare-commit-msg hook does not exist")

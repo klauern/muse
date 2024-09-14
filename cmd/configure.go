@@ -3,12 +3,12 @@ package cmd
 import (
 	"fmt"
 
-	"github.com/urfave/cli/v2"
-	"github.com/spf13/viper"
 	"github.com/klauern/pre-commit-llm/config"
+	"github.com/spf13/viper"
+	"github.com/urfave/cli/v2"
 )
 
-func NewConfigureCmd(config *muse.Config) *cli.Command {
+func NewConfigureCmd(config *config.Config) *cli.Command {
 	return &cli.Command{
 		Name:  "configure",
 		Usage: "Configure the prepare-commit-msg hook",
@@ -30,7 +30,7 @@ func NewConfigureCmd(config *muse.Config) *cli.Command {
 	}
 }
 
-func configureHook(c *cli.Context, config *muse.Config) error {
+func configureHook(c *cli.Context, config *config.Config) error {
 	v := viper.GetViper()
 
 	enabled := c.Bool("enabled")

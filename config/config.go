@@ -1,6 +1,9 @@
 package config
 
 import (
+	"os"
+	"path/filepath"
+
 	"github.com/spf13/viper"
 )
 
@@ -17,7 +20,7 @@ func LoadConfig() (*Config, error) {
 	v := viper.New()
 	v.SetConfigName("muse")
 	v.SetConfigType("yaml")
-	
+
 	// Set default values
 	v.SetDefault("hook.enabled", false)
 	v.SetDefault("hook.type", "default")
