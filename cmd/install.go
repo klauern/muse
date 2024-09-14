@@ -5,15 +5,15 @@ import (
 	"os"
 	"path/filepath"
 
-	"github.com/spf13/cobra"
+	"github.com/urfave/cli/v2"
 	"github.com/yourusername/muse"
 )
 
-func NewInstallCmd(config *muse.Config) *cobra.Command {
-	return &cobra.Command{
-		Use:   "install",
-		Short: "Install the prepare-commit-msg hook",
-		RunE: func(cmd *cobra.Command, args []string) error {
+func NewInstallCmd(config *muse.Config) *cli.Command {
+	return &cli.Command{
+		Name:  "install",
+		Usage: "Install the prepare-commit-msg hook",
+		Action: func(c *cli.Context) error {
 			return installHook(config)
 		},
 	}

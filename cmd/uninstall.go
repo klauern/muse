@@ -5,15 +5,15 @@ import (
 	"os"
 	"path/filepath"
 
-	"github.com/spf13/cobra"
+	"github.com/urfave/cli/v2"
 	"github.com/yourusername/muse"
 )
 
-func NewUninstallCmd(config *muse.Config) *cobra.Command {
-	return &cobra.Command{
-		Use:   "uninstall",
-		Short: "Uninstall the prepare-commit-msg hook",
-		RunE: func(cmd *cobra.Command, args []string) error {
+func NewUninstallCmd(config *muse.Config) *cli.Command {
+	return &cli.Command{
+		Name:  "uninstall",
+		Usage: "Uninstall the prepare-commit-msg hook",
+		Action: func(c *cli.Context) error {
 			return uninstallHook(config)
 		},
 	}

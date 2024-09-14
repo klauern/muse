@@ -5,15 +5,15 @@ import (
 	"os"
 	"path/filepath"
 
-	"github.com/spf13/cobra"
+	"github.com/urfave/cli/v2"
 	"github.com/yourusername/muse"
 )
 
-func NewStatusCmd(config *muse.Config) *cobra.Command {
-	return &cobra.Command{
-		Use:   "status",
-		Short: "Check the status of the prepare-commit-msg hook",
-		RunE: func(cmd *cobra.Command, args []string) error {
+func NewStatusCmd(config *muse.Config) *cli.Command {
+	return &cli.Command{
+		Name:  "status",
+		Usage: "Check the status of the prepare-commit-msg hook",
+		Action: func(c *cli.Context) error {
 			return checkStatus(config)
 		},
 	}

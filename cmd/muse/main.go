@@ -2,9 +2,10 @@ package main
 
 import (
 	"fmt"
+	"log"
 	"os"
 
-	"github.com/spf13/cobra"
+	"github.com/urfave/cli/v2"
 	"github.com/yourusername/muse"
 	"github.com/yourusername/muse/cmd"
 )
@@ -16,21 +17,19 @@ func main() {
 		os.Exit(1)
 	}
 
-	rootCmd := &cobra.Command{
-		Use:   "muse",
-		Short: "Muse is a CLI utility for managing git hooks",
-		Long:  `Muse allows you to manage and configure the prepare-commit-msg git hook.`,
+	app := &cli.App{
+		Name:  "muse",
+		Usage: "A CLI utility for managing git hooks",
+		Commands: []*cli.Command{
+			cmd.NewStatusCmd(config),
+			cmd.NewInstallCmd(config),
+			cmd.NewUninstallCmd(config),
+			cmd.NewConfigureCmd(config),
+		},
 	}
 
-	rootCmd.AddCommand(
-		cmd.NewStatusCmd(config),
-		cmd.NewInstallCmd(config),
-		cmd.NewUninstallCmd(config),
-		cmd.NewConfigureCmd(config),
-	)
-
-	if err := rootCmd.Execute(); err != nil {
-		fmt.Println(err)
-		os.Exit(1)
+	err = app.Run(os.Args)
+	if err != nil {
+		log.Fatal(err)
 	}
 }

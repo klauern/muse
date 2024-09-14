@@ -3,31 +3,38 @@ package cmd
 import (
 	"fmt"
 
-	"github.com/spf13/cobra"
+	"github.com/urfave/cli/v2"
 	"github.com/spf13/viper"
 	"github.com/yourusername/muse"
 )
 
-func NewConfigureCmd(config *muse.Config) *cobra.Command {
-	cmd := &cobra.Command{
-		Use:   "configure",
-		Short: "Configure the prepare-commit-msg hook",
-		RunE: func(cmd *cobra.Command, args []string) error {
-			return configureHook(config)
+func NewConfigureCmd(config *muse.Config) *cli.Command {
+	return &cli.Command{
+		Name:  "configure",
+		Usage: "Configure the prepare-commit-msg hook",
+		Flags: []cli.Flag{
+			&cli.BoolFlag{
+				Name:  "enabled",
+				Usage: "Enable or disable the hook",
+				Value: config.HookConfig.Enabled,
+			},
+			&cli.StringFlag{
+				Name:  "type",
+				Usage: "Set the hook type",
+				Value: config.HookConfig.Type,
+			},
+		},
+		Action: func(c *cli.Context) error {
+			return configureHook(c, config)
 		},
 	}
-
-	cmd.Flags().Bool("enabled", config.HookConfig.Enabled, "Enable or disable the hook")
-	cmd.Flags().String("type", config.HookConfig.Type, "Set the hook type")
-
-	return cmd
 }
 
-func configureHook(config *muse.Config) error {
+func configureHook(c *cli.Context, config *muse.Config) error {
 	v := viper.GetViper()
 
-	enabled, _ := v.Get("enabled").(bool)
-	hookType, _ := v.Get("type").(string)
+	enabled := c.Bool("enabled")
+	hookType := c.String("type")
 
 	v.Set("hook.enabled", enabled)
 	v.Set("hook.type", hookType)
