@@ -6,12 +6,12 @@ import (
 	"os"
 
 	"github.com/klauern/pre-commit-llm/cmd"
-	"github.com/klauern/pre-commit-llm/cmd/muse"
+	"github.com/klauern/pre-commit-llm/config"
 	"github.com/urfave/cli/v2"
 )
 
 func main() {
-	config, err := muse.LoadConfig()
+	cfg, err := config.LoadConfig()
 	if err != nil {
 		fmt.Printf("Error loading config: %v\n", err)
 		os.Exit(1)
@@ -21,10 +21,10 @@ func main() {
 		Name:  "muse",
 		Usage: "A CLI utility for managing git hooks",
 		Commands: []*cli.Command{
-			cmd.NewStatusCmd(config),
-			cmd.NewInstallCmd(config),
-			cmd.NewUninstallCmd(config),
-			cmd.NewConfigureCmd(config),
+			cmd.NewStatusCmd(cfg),
+			cmd.NewInstallCmd(cfg),
+			cmd.NewUninstallCmd(cfg),
+			cmd.NewConfigureCmd(cfg),
 		},
 	}
 
