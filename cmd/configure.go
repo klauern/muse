@@ -18,11 +18,6 @@ func NewConfigureCmd(config *config.Config) *cli.Command {
 				Usage: "Enable or disable the hook",
 				Value: config.HookConfig.Enabled,
 			},
-			&cli.StringFlag{
-				Name:  "type",
-				Usage: "Set the hook type",
-				Value: config.HookConfig.Type,
-			},
 		},
 		Action: func(c *cli.Context) error {
 			return configureHook(c, config)
@@ -34,15 +29,13 @@ func configureHook(c *cli.Context, config *config.Config) error {
 	v := viper.GetViper()
 
 	enabled := c.Bool("enabled")
-	hookType := c.String("type")
 
 	v.Set("hook.enabled", enabled)
-	v.Set("hook.type", hookType)
 
 	if err := v.WriteConfig(); err != nil {
 		return fmt.Errorf("failed to write config: %w", err)
 	}
 
-	fmt.Printf("Configuration updated: Enabled=%v, Type=%s\n", enabled, hookType)
+	fmt.Printf("Configuration updated: Enabled=%v\n", enabled)
 	return nil
 }
