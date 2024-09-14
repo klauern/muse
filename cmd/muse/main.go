@@ -6,8 +6,8 @@ import (
 	"os"
 
 	"github.com/urfave/cli/v2"
-	"github.com/yourusername/muse"
-	"github.com/yourusername/muse/cmd"
+	"github.com/klauern/pre-commit-llm"
+	"github.com/klauern/pre-commit-llm/cmd"
 )
 
 func main() {

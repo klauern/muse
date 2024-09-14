@@ -6,7 +6,7 @@ import (
 	"path/filepath"
 
 	"github.com/urfave/cli/v2"
-	"github.com/yourusername/muse"
+	"github.com/klauern/pre-commit-llm"
 )
 
 func NewInstallCmd(config *muse.Config) *cli.Command {

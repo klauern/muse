@@ -1,4 +1,4 @@
-package muse
+package pre_commit_llm
 
 import (
 	"os"

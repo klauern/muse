@@ -5,7 +5,7 @@ import (
 
 	"github.com/urfave/cli/v2"
 	"github.com/spf13/viper"
-	"github.com/yourusername/muse"
+	"github.com/klauern/pre-commit-llm"
 )
 
 func NewConfigureCmd(config *muse.Config) *cli.Command {
