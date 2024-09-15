@@ -6,14 +6,14 @@ import (
 )
 
 type OllamaService struct {
-	Endpoint  string
-	ModelName string
+	endpoint  string
+	modelName string
 }
 
 func NewOllamaService(endpoint, modelName string) *OllamaService {
 	return &OllamaService{
-		Endpoint:  endpoint,
-		ModelName: modelName,
+		endpoint:  endpoint,
+		modelName: modelName,
 	}
 }
 

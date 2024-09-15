@@ -5,12 +5,14 @@ import (
 )
 
 type AnthropicService struct {
-	client *LLMClient
+	apiKey    string
+	modelName string
 }
 
 func NewAnthropicService(apiKey, modelName string) *AnthropicService {
 	return &AnthropicService{
-		client: NewLLMClient(apiKey, modelName),
+		apiKey:    apiKey,
+		modelName: modelName,
 	}
 }
 

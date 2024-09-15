@@ -13,13 +13,13 @@ type Config struct {
 }
 
 type LLMConfig struct {
-	Provider         string
-	OpenAIAPIKey     string
-	OpenAIModel      string
-	AnthropicAPIKey  string
-	AnthropicModel   string
-	OllamaEndpoint   string
-	OllamaModel      string
+	Provider         string `mapstructure:"provider"`
+	OpenAIAPIKey     string `mapstructure:"openai_api_key"`
+	OpenAIModel      string `mapstructure:"openai_model"`
+	AnthropicAPIKey  string `mapstructure:"anthropic_api_key"`
+	AnthropicModel   string `mapstructure:"anthropic_model"`
+	OllamaEndpoint   string `mapstructure:"ollama_endpoint"`
+	OllamaModel      string `mapstructure:"ollama_model"`
 }
 
 type HookConfig struct {
