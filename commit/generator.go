@@ -13,13 +13,13 @@ type CommitMessageGenerator struct {
 }
 
 func NewCommitMessageGenerator(cfg *config.Config, ragService rag.RAGService) (*CommitMessageGenerator, error) {
-	llmService, err := llm.NewLLMService(&cfg.LLM)
+	llmClient, err := llm.NewLLMClient(&cfg.LLM)
 	if err != nil {
-		return nil, fmt.Errorf("failed to create LLM service: %w", err)
+		return nil, fmt.Errorf("failed to create LLM client: %w", err)
 	}
 
 	return &CommitMessageGenerator{
-		LLMService: llmService,
+		LLMService: llmClient,
 		RAGService: ragService,
 	}, nil
 }
