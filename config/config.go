@@ -8,14 +8,18 @@ import (
 )
 
 type Config struct {
-	HookConfig   HookConfig
-	LLMProvider  string
-	OpenAIAPIKey string
-	OpenAIModel  string
-	AnthropicAPIKey string
-	AnthropicModel  string
-	OllamaEndpoint  string
-	OllamaModel     string
+	HookConfig HookConfig
+	LLM        LLMConfig
+}
+
+type LLMConfig struct {
+	Provider         string
+	OpenAIAPIKey     string
+	OpenAIModel      string
+	AnthropicAPIKey  string
+	AnthropicModel   string
+	OllamaEndpoint   string
+	OllamaModel      string
 }
 
 type HookConfig struct {

@@ -79,15 +79,15 @@ func NewHook(hookType string, config *Config) PrepareCommitMsgHook {
 	switch hookType {
 	case "llm":
 		var llmService llm.LLMService
-		switch config.LLMProvider {
+		switch config.LLM.Provider {
 		case "openai":
-			llmService = &llm.OpenAIService{APIKey: config.OpenAIAPIKey, ModelName: config.OpenAIModel}
+			llmService = llm.NewOpenAIService(config.LLM.OpenAIAPIKey, config.LLM.OpenAIModel)
 		case "anthropic":
-			llmService = &llm.AnthropicService{APIKey: config.AnthropicAPIKey, ModelName: config.AnthropicModel}
+			llmService = llm.NewAnthropicService(config.LLM.AnthropicAPIKey, config.LLM.AnthropicModel)
 		case "ollama":
-			llmService = &llm.OllamaService{Endpoint: config.OllamaEndpoint, ModelName: config.OllamaModel}
+			llmService = llm.NewOllamaService(config.LLM.OllamaEndpoint, config.LLM.OllamaModel)
 		default:
-			llmService = &llm.OpenAIService{APIKey: config.OpenAIAPIKey, ModelName: config.OpenAIModel}
+			llmService = llm.NewOpenAIService(config.LLM.OpenAIAPIKey, config.LLM.OpenAIModel)
 		}
 
 		ragService := &rag.GitRAGService{}

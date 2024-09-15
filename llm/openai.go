@@ -2,15 +2,18 @@ package llm
 
 import (
 	"context"
-	"fmt"
 )
 
 type OpenAIService struct {
-	APIKey   string
-	ModelName string
+	client *LLMClient
+}
+
+func NewOpenAIService(apiKey, modelName string) *OpenAIService {
+	return &OpenAIService{
+		client: NewLLMClient(apiKey, modelName),
+	}
 }
 
 func (s *OpenAIService) GenerateCommitMessage(ctx context.Context, diff, context string) (string, error) {
-	// TODO: Implement OpenAI API call
-	return fmt.Sprintf("OpenAI generated commit message for diff: %s", diff), nil
+	return s.client.GenerateCommitMessage(ctx, diff, context)
 }
