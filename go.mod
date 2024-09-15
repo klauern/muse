@@ -9,6 +9,8 @@ require (
 	github.com/spf13/viper v1.18.2
 	github.com/urfave/cli/v2 v2.27.4
 	github.com/xrash/smetrics v0.0.0-20240521201337-686a1a2994c1 // indirect
+	github.com/anthropics/anthropic-sdk-go v0.0.0-20240301171647-1cfb11e7efdd
+	github.com/jmorganca/ollama v0.1.26
 )
 
 require (
