@@ -5,6 +5,7 @@ go 1.23
 toolchain go1.23.1
 
 require (
+	github.com/mitchellh/mapstructure v1.5.0
 	github.com/sashabaranov/go-openai v1.29.2
 	github.com/spf13/viper v1.19.0
 	github.com/urfave/cli/v2 v2.27.4
