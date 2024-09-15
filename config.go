@@ -1,14 +1,5 @@
 package pre_commit_llm
 
-type Config struct {
-	HookConfig HookConfig
-}
-
-type HookConfig struct {
-	Enabled bool
-	Type    string
-}
-
 type ModelConfig struct {
 	ModelName         string
 	Temperature       float32
@@ -17,5 +8,10 @@ type ModelConfig struct {
 	FrequencyPenalty  float32
 	PresencePenalty   float32
 	StopSequences     []string
+}
+
+type LLMConfig struct {
+	Provider string
+	Config   map[string]interface{}
 }
 
