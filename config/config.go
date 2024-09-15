@@ -9,8 +9,8 @@ import (
 )
 
 type Config struct {
-	HookConfig HookConfig
-	LLM        LLMConfig
+	HookConfig HookConfig `mapstructure:"hook"`
+	LLM        LLMConfig  `mapstructure:"llm"`
 }
 
 type LLMConfig struct {
@@ -19,8 +19,8 @@ type LLMConfig struct {
 }
 
 type HookConfig struct {
-	Enabled bool
-	Type    string
+	Enabled bool   `mapstructure:"enabled"`
+	Type    string `mapstructure:"type"`
 }
 
 func LoadConfig() (*Config, error) {
@@ -50,7 +50,16 @@ func LoadConfig() (*Config, error) {
 	}
 
 	var config Config
-	if err := v.Unmarshal(&config); err != nil {
+	decoderConfig := &mapstructure.DecoderConfig{
+		WeaklyTypedInput: true,
+		Result:           &config,
+	}
+	decoder, err := mapstructure.NewDecoder(decoderConfig)
+	if err != nil {
+		return nil, err
+	}
+
+	if err := decoder.Decode(v.AllSettings()); err != nil {
 		return nil, err
 	}
 
