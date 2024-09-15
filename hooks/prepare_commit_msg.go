@@ -1,4 +1,4 @@
-package pre_commit_llm
+package hooks
 
 import (
 	"context"
@@ -7,6 +7,7 @@ import (
 	"os/exec"
 
 	"github.com/klauern/pre-commit-llm/commit"
+	"github.com/klauern/pre-commit-llm/config"
 	"github.com/klauern/pre-commit-llm/llm"
 	"github.com/klauern/pre-commit-llm/rag"
 )
@@ -20,74 +21,67 @@ type LLMHook struct {
 }
 
 func (h *LLMHook) Run(commitMsgFile string, commitSource string, sha1 string) error {
-    var diff string
-    var err error
+	var diff string
+	var err error
 
-    switch commitSource {
-    case "message":
-        // Normal commit
-        diff, err = getGitDiff("--cached")
-    case "commit":
-        // Amending a commit
-        diff, err = getGitDiff("HEAD^")
-    case "merge":
-        // Merge commit
-        diff, err = getMergeDiff()
-    default:
-        // Default to cached diff
-        diff, err = getGitDiff("--cached")
-    }
+	switch commitSource {
+	case "message":
+		// Normal commit
+		diff, err = getGitDiff("--cached")
+	case "commit":
+		// Amending a commit
+		diff, err = getGitDiff("HEAD^")
+	case "merge":
+		// Merge commit
+		diff, err = getMergeDiff()
+	default:
+		// Default to cached diff
+		diff, err = getGitDiff("--cached")
+	}
 
-    if err != nil {
-        return fmt.Errorf("failed to get git diff: %w", err)
-    }
+	if err != nil {
+		return fmt.Errorf("failed to get git diff: %w", err)
+	}
 
-    // Generate the commit message
-    ctx := context.Background()
-    message, err := h.Generator.Generate(ctx, diff)
-    if err != nil {
-        return fmt.Errorf("failed to generate commit message: %w", err)
-    }
+	// Generate the commit message
+	ctx := context.Background()
+	message, err := h.Generator.Generate(ctx, diff)
+	if err != nil {
+		return fmt.Errorf("failed to generate commit message: %w", err)
+	}
 
-    // Write the generated message to the commit message file
-    if err := os.WriteFile(commitMsgFile, []byte(message), 0644); err != nil {
-        return fmt.Errorf("failed to write commit message: %w", err)
-    }
+	// Write the generated message to the commit message file
+	if err := os.WriteFile(commitMsgFile, []byte(message), 0644); err != nil {
+		return fmt.Errorf("failed to write commit message: %w", err)
+	}
 
-    return nil
+	return nil
 }
 
 func getGitDiff(target string) (string, error) {
-    cmd := exec.Command("git", "diff", target)
-    output, err := cmd.Output()
-    if err != nil {
-        return "", err
-    }
-    return string(output), nil
+	cmd := exec.Command("git", "diff", target)
+	output, err := cmd.Output()
+	if err != nil {
+		return "", err
+	}
+	return string(output), nil
 }
 
 func getMergeDiff() (string, error) {
-    cmd := exec.Command("git", "diff", "HEAD^1", "HEAD^2")
-    output, err := cmd.Output()
-    if err != nil {
-        return "", err
-    }
-    return string(output), nil
+	cmd := exec.Command("git", "diff", "HEAD^1", "HEAD^2")
+	output, err := cmd.Output()
+	if err != nil {
+		return "", err
+	}
+	return string(output), nil
 }
 
-func NewHook(hookType string, config *Config) PrepareCommitMsgHook {
+func NewHook(hookType string, cfg *config.Config) (PrepareCommitMsgHook, error) {
 	switch hookType {
 	case "llm":
-		var llmService llm.LLMService
-		switch config.LLM.Provider {
-		case "openai":
-			llmService = llm.NewOpenAIService(config.LLM.OpenAIAPIKey, config.LLM.OpenAIModel)
-		case "anthropic":
-			llmService = llm.NewAnthropicService(config.LLM.AnthropicAPIKey, config.LLM.AnthropicModel)
-		case "ollama":
-			llmService = llm.NewOllamaService(config.LLM.OllamaEndpoint, config.LLM.OllamaModel)
-		default:
-			llmService = llm.NewOpenAIService(config.LLM.OpenAIAPIKey, config.LLM.OpenAIModel)
+		llmService, err := llm.NewLLMService(&cfg.LLM)
+		if err != nil {
+			return nil, fmt.Errorf("failed to create LLM service: %w", err)
 		}
 
 		ragService := &rag.GitRAGService{}
@@ -95,9 +89,9 @@ func NewHook(hookType string, config *Config) PrepareCommitMsgHook {
 			LLMService: llmService,
 			RAGService: ragService,
 		}
-		return &LLMHook{Generator: generator}
+		return &LLMHook{Generator: generator}, nil
 	default:
-		return &DefaultHook{}
+		return &DefaultHook{}, nil
 	}
 }
 
