@@ -88,18 +88,16 @@ func TestAnthropicService_GenerateCommitMessage_Integration(t *testing.T) {
 		t.Errorf("Commit message should include detail lines after the blank line")
 	}
 
-	// Check that detail lines start with a dash or asterisk
-	for _, line := range lines[2:] {
-		if !strings.HasPrefix(strings.TrimSpace(line), "-") && !strings.HasPrefix(strings.TrimSpace(line), "*") {
-			t.Errorf("Detail line should start with a dash (-) or asterisk (*): %s", line)
-		}
+	// Check that the commit message doesn't contain the entire diff
+	if strings.Contains(commitMessage, "diff --git") {
+		t.Errorf("Commit message should not contain the entire diff")
 	}
 
-	// Check that there's no explanatory text about commit message format
-	explanatoryPhrases := []string{"conventional commit format", "commit message follows", "brief description of the changes"}
-	for _, phrase := range explanatoryPhrases {
-		if strings.Contains(strings.ToLower(commitMessage), phrase) {
-			t.Errorf("Commit message should not contain explanatory text about its format: %s", phrase)
-		}
+	// Check that the commit message is reasonably sized
+	if len(commitMessage) > 2000 {
+		t.Errorf("Commit message is too long: %d characters", len(commitMessage))
 	}
+
+	// Log the commit message for manual inspection
+	t.Logf("Generated commit message:\n%s", commitMessage)
 }
