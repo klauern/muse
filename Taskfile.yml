@@ -18,9 +18,19 @@ tasks:
       - go test ./... -v
 
   test:integration:
-    desc: "Run Go integration tests"
+    desc: "Run all Go integration tests"
     cmds:
       - go test ./... -v -tags=integration
+
+  test:integration:anthropic:
+    desc: "Run Anthropic integration tests"
+    cmds:
+      - go test ./llm -v -tags=integration -run TestAnthropicService
+
+  test:integration:openai:
+    desc: "Run OpenAI integration tests"
+    cmds:
+      - go test ./llm -v -tags=integration -run TestOpenAIService
 
   format:
     desc: "Format Go code"
