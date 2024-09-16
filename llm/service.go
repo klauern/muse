@@ -54,3 +54,15 @@ func GetCommitTemplate(style CommitStyle) *template.Template {
 		return templates.DefaultCommitTemplate
 	}
 }
+
+// GetCommitStyleFromString converts a string representation of commit style to CommitStyle enum
+func GetCommitStyleFromString(style string) CommitStyle {
+	switch strings.ToLower(style) {
+	case "conventional":
+		return ConventionalStyle
+	case "gitmojis":
+		return GitmojisStyle
+	default:
+		return DefaultStyle
+	}
+}
