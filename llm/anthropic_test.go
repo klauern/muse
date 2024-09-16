@@ -1,6 +1,7 @@
 package llm
 
 import (
+	"os"
 	"testing"
 
 	"github.com/klauern/pre-commit-llm/config"
