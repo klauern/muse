@@ -52,7 +52,9 @@ type Request struct {
 }
 
 type Response struct {
-	Content string `json:"content"`
+	Content []struct {
+		Text string `json:"text"`
+	} `json:"content"`
 }
 
 func NewAnthropicService(apiKey, model string) *AnthropicService {
@@ -132,7 +134,11 @@ func (s *AnthropicService) GenerateCommitMessage(ctx context.Context, diff, cont
 		return "", err
 	}
 
-	return strings.TrimSpace(response.Content), nil
+	if len(response.Content) == 0 {
+		return "", fmt.Errorf("empty response from API")
+	}
+
+	return strings.TrimSpace(response.Content[0].Text), nil
 }
 
 func init() {
