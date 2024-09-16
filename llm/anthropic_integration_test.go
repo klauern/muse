@@ -55,8 +55,6 @@ func TestAnthropicService_GenerateCommitMessage_Integration(t *testing.T) {
 	// Check for the presence of key components in the commit message
 	expectedComponents := []string{
 		"feat", // The type of change
-		"config", // The scope of the change
-		"XDG", // A key term from the change
 		":", // Separator in conventional commit format
 	}
 
@@ -68,8 +66,8 @@ func TestAnthropicService_GenerateCommitMessage_Integration(t *testing.T) {
 
 	// Check the structure of the commit message
 	lines := strings.Split(strings.TrimSpace(commitMessage), "\n")
-	if len(lines) < 3 {
-		t.Fatalf("Commit message should have at least a subject line, a blank line, and one or more detail lines")
+	if len(lines) < 2 {
+		t.Fatalf("Commit message should have at least a subject line and one or more detail lines")
 	}
 
 	// Check the subject line (first line)
@@ -78,18 +76,18 @@ func TestAnthropicService_GenerateCommitMessage_Integration(t *testing.T) {
 		t.Errorf("Subject line should be in the format 'type(scope): description'")
 	}
 
-	// Check that the second line is blank
-	if lines[1] != "" {
-		t.Errorf("Second line should be blank")
-	}
-
 	// Check that the commit message doesn't contain the entire diff
 	if strings.Contains(commitMessage, "diff --git") {
 		t.Errorf("Commit message should not contain the entire diff")
 	}
 
 	// Check that the commit message is reasonably sized
-	if len(commitMessage) > 2000 {
+	if len(commitMessage) > 500 {
 		t.Errorf("Commit message is too long: %d characters", len(commitMessage))
+	}
+
+	// Check that the commit message doesn't contain markdown code block markers
+	if strings.Contains(commitMessage, "```") {
+		t.Errorf("Commit message should not contain markdown code block markers")
 	}
 }

@@ -140,7 +140,36 @@ func (s *AnthropicService) GenerateCommitMessage(ctx context.Context, diff, cont
 		return "", fmt.Errorf("empty response from API")
 	}
 
-	return strings.TrimSpace(response.Content[0].Text), nil
+	// Extract the commit message from the fenced code block
+	fullResponse := response.Content[0].Text
+	commitMessage := extractCommitMessage(fullResponse)
+
+	return commitMessage, nil
+}
+
+func extractCommitMessage(response string) string {
+	// Find the content between the first pair of triple backticks
+	start := strings.Index(response, "```")
+	if start == -1 {
+		return strings.TrimSpace(response) // Return the full response if no code block is found
+	}
+	start += 3 // Move past the opening backticks
+
+	end := strings.Index(response[start:], "```")
+	if end == -1 {
+		return strings.TrimSpace(response[start:]) // Return the rest of the response if closing backticks are not found
+	}
+
+	// Extract and trim the content within the code block
+	commitMessage := strings.TrimSpace(response[start : start+end])
+
+	// Remove any language identifier (e.g., "bash") from the first line
+	lines := strings.SplitN(commitMessage, "\n", 2)
+	if len(lines) > 1 && !strings.Contains(lines[0], ":") {
+		commitMessage = strings.TrimSpace(lines[1])
+	}
+
+	return commitMessage
 }
 
 func init() {
