@@ -82,12 +82,30 @@ func TestAnthropicService_GenerateCommitMessage_Integration(t *testing.T) {
 	}
 
 	// Check that the commit message is reasonably sized
-	if len(commitMessage) > 500 {
+	if len(commitMessage) > 300 {
 		t.Errorf("Commit message is too long: %d characters", len(commitMessage))
 	}
 
 	// Check that the commit message doesn't contain markdown code block markers
 	if strings.Contains(commitMessage, "```") {
 		t.Errorf("Commit message should not contain markdown code block markers")
+	}
+
+	// Check that the commit message has a subject line and at least one bullet point
+	lines := strings.Split(strings.TrimSpace(commitMessage), "\n")
+	if len(lines) < 2 {
+		t.Errorf("Commit message should have a subject line and at least one bullet point")
+	}
+
+	// Check that the second line is blank (separating subject from body)
+	if len(lines) > 1 && lines[1] != "" {
+		t.Errorf("Second line of commit message should be blank")
+	}
+
+	// Check that bullet points start with - or *
+	for i := 2; i < len(lines); i++ {
+		if !strings.HasPrefix(strings.TrimSpace(lines[i]), "-") && !strings.HasPrefix(strings.TrimSpace(lines[i]), "*") {
+			t.Errorf("Body lines should start with - or *")
+		}
 	}
 }

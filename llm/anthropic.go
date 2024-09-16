@@ -97,10 +97,10 @@ func (s *AnthropicService) GenerateCommitMessage(ctx context.Context, diff, cont
 
 	req := Request{
 		Model:     s.model,
-		MaxTokens: 500, // Increased to allow for a more detailed commit message
-		System:    "Generate a concise git commit message. The first line should follow the conventional commit format. Then, provide a detailed list of changes without explanations. Focus on what was changed, not why.",
+		MaxTokens: 300, // Reduced to encourage more concise responses
+		System:    "You are a Git commit message generator. Create a concise, conventional commit message based on the provided diff. The message should have a brief subject line (type(scope): description) followed by a blank line and a short bullet list of key changes. Exclude file names, line numbers, and diff syntax. Focus only on the most important changes.",
 		Messages: []Message{
-			{Role: "user", Content: promptBuffer.String()},
+			{Role: "user", Content: "Generate a commit message for this diff:\n\n" + diff},
 		},
 	}
 
@@ -148,28 +148,33 @@ func (s *AnthropicService) GenerateCommitMessage(ctx context.Context, diff, cont
 }
 
 func extractCommitMessage(response string) string {
-	// Find the content between the first pair of triple backticks
-	start := strings.Index(response, "```")
-	if start == -1 {
-		return strings.TrimSpace(response) // Return the full response if no code block is found
-	}
-	start += 3 // Move past the opening backticks
+	// Remove any markdown code block markers
+	response = strings.ReplaceAll(response, "```", "")
 
-	end := strings.Index(response[start:], "```")
-	if end == -1 {
-		return strings.TrimSpace(response[start:]) // Return the rest of the response if closing backticks are not found
-	}
+	// Trim any leading or trailing whitespace
+	response = strings.TrimSpace(response)
 
-	// Extract and trim the content within the code block
-	commitMessage := strings.TrimSpace(response[start : start+end])
+	// Split the response into lines
+	lines := strings.Split(response, "\n")
 
-	// Remove any language identifier (e.g., "bash") from the first line
-	lines := strings.SplitN(commitMessage, "\n", 2)
-	if len(lines) > 1 && !strings.Contains(lines[0], ":") {
-		commitMessage = strings.TrimSpace(lines[1])
+	// Ensure we have at least a subject line
+	if len(lines) == 0 {
+		return ""
 	}
 
-	return commitMessage
+	// Keep the subject line and up to 5 bullet points
+	result := []string{lines[0]}
+	bulletPoints := 0
+	for i := 1; i < len(lines) && bulletPoints < 5; i++ {
+		line := strings.TrimSpace(lines[i])
+		if strings.HasPrefix(line, "-") || strings.HasPrefix(line, "*") {
+			result = append(result, line)
+			bulletPoints++
+		}
+	}
+
+	// Join the lines back together
+	return strings.Join(result, "\n")
 }
 
 func init() {
