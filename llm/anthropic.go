@@ -18,17 +18,17 @@ const (
 
 type AnthropicProvider struct{}
 
-func (p *AnthropicProvider) NewService(config map[string]interface{}) (LLMService, error) {
+func (p *AnthropicProvider) NewService(config *config.LLMConfig) (LLMService, error) {
 	apiKey := os.Getenv("ANTHROPIC_API_KEY")
 	if apiKey == "" {
 		var ok bool
-		apiKey, ok = config["api_key"].(string)
+		apiKey, ok = config.Extra["api_key"].(string)
 		if !ok {
 			return nil, fmt.Errorf("Anthropic API key not found in config or environment. Please set ANTHROPIC_API_KEY environment variable or provide it in the config")
 		}
 	}
-	model, ok := config["model"].(string)
-	if !ok {
+	model := config.Model
+	if model == "" {
 		model = "claude-3-sonnet-20240229" // Default model if not specified
 	}
 	return NewAnthropicService(apiKey, model), nil
