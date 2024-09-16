@@ -13,8 +13,9 @@ func init() {
 Generate a {{.Type}} commit message for the following git diff:
 {{.Diff}}
 
-Additional context:
+{{if .Context}}Additional context:
 {{.Context}}
+{{end}}
 
 The commit message should follow this format:
 {{.Format}}

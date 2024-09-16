@@ -42,7 +42,7 @@ func NewLLMService(cfg *config.LLMConfig) (LLMService, error) {
 	if !ok {
 		return nil, fmt.Errorf("unsupported LLM provider: %s", cfg.Provider)
 	}
-	return provider.NewService(cfg.Config)
+	return provider.NewService(cfg)
 }
 
 // GetCommitTemplate returns the appropriate template based on the commit style
