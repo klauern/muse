@@ -14,7 +14,21 @@ const (
 	apiVersion = "2023-06-01"
 )
 
-type AnthropicProvider struct {
+type AnthropicProvider struct{}
+
+func (p *AnthropicProvider) NewService(config map[string]interface{}) (LLMService, error) {
+	apiKey, ok := config["api_key"].(string)
+	if !ok {
+		return nil, fmt.Errorf("Anthropic API key not found in config")
+	}
+	model, ok := config["model"].(string)
+	if !ok {
+		model = "claude-3-sonnet-20240229" // Default model if not specified
+	}
+	return NewAnthropicService(apiKey, model), nil
+}
+
+type AnthropicService struct {
 	apiKey string
 	model  string
 }
@@ -34,17 +48,14 @@ type Response struct {
 	Content string `json:"content"`
 }
 
-func NewService(apiKey, model string) *AnthropicProvider {
-	if model == "" {
-		model = "claude-3-5-sonnet-20240620" // Default model if not specified
-	}
-	return &AnthropicProvider{
+func NewAnthropicService(apiKey, model string) *AnthropicService {
+	return &AnthropicService{
 		apiKey: apiKey,
 		model:  model,
 	}
 }
 
-func (s *AnthropicProvider) GenerateCommitMessage(ctx context.Context, diff, context string) (string, error) {
+func (s *AnthropicService) GenerateCommitMessage(ctx context.Context, diff, context string) (string, error) {
 	prompt := fmt.Sprintf("Generate a concise commit message for the following diff:\n\n%s\n\nContext: %s", diff, context)
 
 	req := Request{
