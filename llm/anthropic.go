@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"os"
 	"strings"
 )
 
@@ -17,9 +18,13 @@ const (
 type AnthropicProvider struct{}
 
 func (p *AnthropicProvider) NewService(config map[string]interface{}) (LLMService, error) {
-	apiKey, ok := config["api_key"].(string)
-	if !ok {
-		return nil, fmt.Errorf("Anthropic API key not found in config")
+	apiKey := os.Getenv("ANTHROPIC_API_KEY")
+	if apiKey == "" {
+		var ok bool
+		apiKey, ok = config["api_key"].(string)
+		if !ok {
+			return nil, fmt.Errorf("Anthropic API key not found in config or environment")
+		}
 	}
 	model, ok := config["model"].(string)
 	if !ok {
