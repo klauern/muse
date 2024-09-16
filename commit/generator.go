@@ -26,13 +26,13 @@ func NewCommitMessageGenerator(cfg *config.Config, ragService rag.RAGService) (*
 	}, nil
 }
 
-func (g *CommitMessageGenerator) Generate(ctx context.Context, diff string) (string, error) {
+func (g *CommitMessageGenerator) Generate(ctx context.Context, diff string, style llm.CommitStyle) (string, error) {
 	context, err := g.RAGService.GetRelevantContext(ctx, diff)
 	if err != nil {
 		return "", fmt.Errorf("failed to get relevant context: %w", err)
 	}
 
-	message, err := g.LLMService.GenerateCommitMessage(ctx, diff, context)
+	message, err := g.LLMService.GenerateCommitMessage(ctx, diff, context, style)
 	if err != nil {
 		return "", fmt.Errorf("failed to generate commit message: %w", err)
 	}

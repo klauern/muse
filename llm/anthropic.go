@@ -73,9 +73,10 @@ import (
 	"github.com/klauern/pre-commit-llm/templates"
 )
 
-func (s *AnthropicService) GenerateCommitMessage(ctx context.Context, diff, context string) (string, error) {
+func (s *AnthropicService) GenerateCommitMessage(ctx context.Context, diff, context string, style CommitStyle) (string, error) {
+	template := GetCommitTemplate(style)
 	var promptBuffer bytes.Buffer
-	err := templates.CommitMessageTemplate.Execute(&promptBuffer, struct {
+	err := template.Execute(&promptBuffer, struct {
 		Diff    string
 		Context string
 	}{
@@ -88,7 +89,7 @@ func (s *AnthropicService) GenerateCommitMessage(ctx context.Context, diff, cont
 
 	req := Request{
 		Model:     s.model,
-		MaxTokens: 150, // Increased to allow for a more detailed commit message
+		MaxTokens: 300, // Increased to allow for a more detailed commit message
 		Messages: []Message{
 			{Role: "user", Content: promptBuffer.String()},
 		},

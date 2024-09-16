@@ -24,8 +24,21 @@ type OpenAIService struct {
 	model  string
 }
 
-func (s *OpenAIService) GenerateCommitMessage(ctx context.Context, diff, context string) (string, error) {
-	// TODO: Implement OpenAI API call
+func (s *OpenAIService) GenerateCommitMessage(ctx context.Context, diff, context string, style CommitStyle) (string, error) {
+	template := GetCommitTemplate(style)
+	var promptBuffer bytes.Buffer
+	err := template.Execute(&promptBuffer, struct {
+		Diff    string
+		Context string
+	}{
+		Diff:    diff,
+		Context: context,
+	})
+	if err != nil {
+		return "", fmt.Errorf("failed to execute template: %w", err)
+	}
+
+	// TODO: Implement OpenAI API call using the generated prompt
 	return fmt.Sprintf("OpenAI generated commit message for diff: %s", diff), nil
 }
 
