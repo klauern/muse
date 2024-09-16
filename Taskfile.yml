@@ -7,9 +7,20 @@ tasks:
       - go build -o bin/mybinary ./cmd/...
 
   test:
-    desc: "Run Go tests"
+    desc: "Run all Go tests (unit and integration)"
     cmds:
-      - go test ./...
+      - task: test:unit
+      - task: test:integration
+
+  test:unit:
+    desc: "Run Go unit tests"
+    cmds:
+      - go test ./... -v
+
+  test:integration:
+    desc: "Run Go integration tests"
+    cmds:
+      - go test ./... -v -tags=integration
 
   format:
     desc: "Format Go code"
