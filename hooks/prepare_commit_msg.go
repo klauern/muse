@@ -18,6 +18,7 @@ type PrepareCommitMsgHook interface {
 
 type LLMHook struct {
 	Generator *commit.CommitMessageGenerator
+	Config    *config.Config
 }
 
 func (h *LLMHook) Run(commitMsgFile string, commitSource string, sha1 string) error {
@@ -35,6 +36,25 @@ func (h *LLMHook) Run(commitMsgFile string, commitSource string, sha1 string) er
 	message, err := h.Generator.Generate(ctx, diff, commitStyle)
 	if err != nil {
 		return fmt.Errorf("failed to generate commit message: %w", err)
+	}
+
+	// Check if dry run mode is enabled
+	if h.Config.Hook.DryRun {
+		fmt.Println("Dry run mode: Generated commit message:")
+		fmt.Println(message)
+		return nil
+	}
+
+	// Check if preview mode is enabled
+	if h.Config.Hook.Preview {
+		fmt.Println("Preview mode: Generated commit message:")
+		fmt.Println(message)
+		fmt.Print("Do you want to use this commit message? (y/n): ")
+		var response string
+		fmt.Scanln(&response)
+		if response != "y" && response != "Y" {
+			return fmt.Errorf("user rejected the generated commit message")
+		}
 	}
 
 	// Write the generated message to the commit message file
@@ -68,7 +88,7 @@ func NewHook(hookType string, cfg *config.Config) (PrepareCommitMsgHook, error) 
 			LLMService: llmService,
 			RAGService: ragService,
 		}
-		return &LLMHook{Generator: generator}, nil
+		return &LLMHook{Generator: generator, Config: cfg}, nil
 	default:
 		return &DefaultHook{}, nil
 	}

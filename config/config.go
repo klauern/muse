@@ -23,6 +23,8 @@ type HookConfig struct {
 	Type        string `mapstructure:"type"`
 	LLMProvider string `mapstructure:"llm_provider"`
 	CommitStyle string `mapstructure:"commit_style"`
+	DryRun      bool   `mapstructure:"dry_run"`
+	Preview     bool   `mapstructure:"preview"`
 }
 
 func LoadConfig() (*Config, error) {
