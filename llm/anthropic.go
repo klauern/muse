@@ -96,8 +96,9 @@ func (s *AnthropicService) GenerateCommitMessage(ctx context.Context, diff, cont
 
 	req := Request{
 		Model:     s.model,
-		MaxTokens: 300, // Increased to allow for a more detailed commit message
+		MaxTokens: 500, // Increased to allow for a more detailed commit message
 		Messages: []Message{
+			{Role: "system", Content: "Generate a concise git commit message. The first line should follow the conventional commit format. Then, provide a detailed list of changes without explanations. Focus on what was changed, not why."},
 			{Role: "user", Content: promptBuffer.String()},
 		},
 	}

@@ -67,14 +67,39 @@ func TestAnthropicService_GenerateCommitMessage_Integration(t *testing.T) {
 	}
 
 	// Check the structure of the commit message
-	parts := strings.SplitN(commitMessage, "\n\n", 3)
-	if len(parts) < 2 {
-		t.Errorf("Commit message should have at least a subject and a body, separated by a blank line")
+	lines := strings.Split(strings.TrimSpace(commitMessage), "\n")
+	if len(lines) < 2 {
+		t.Errorf("Commit message should have at least a subject line and one or more detail lines")
 	}
 
 	// Check the subject line (first line)
-	subjectLine := strings.SplitN(parts[0], ":", 2)
+	subjectLine := strings.SplitN(lines[0], ":", 2)
 	if len(subjectLine) != 2 {
 		t.Errorf("Subject line should be in the format 'type(scope): description'")
+	}
+
+	// Check that the second line is blank
+	if len(lines) > 1 && lines[1] != "" {
+		t.Errorf("Second line should be blank")
+	}
+
+	// Check that there are detail lines
+	if len(lines) < 3 {
+		t.Errorf("Commit message should include detail lines after the blank line")
+	}
+
+	// Check that detail lines start with a dash or asterisk
+	for _, line := range lines[2:] {
+		if !strings.HasPrefix(strings.TrimSpace(line), "-") && !strings.HasPrefix(strings.TrimSpace(line), "*") {
+			t.Errorf("Detail line should start with a dash (-) or asterisk (*): %s", line)
+		}
+	}
+
+	// Check that there's no explanatory text about commit message format
+	explanatoryPhrases := []string{"conventional commit format", "commit message follows", "brief description of the changes"}
+	for _, phrase := range explanatoryPhrases {
+		if strings.Contains(strings.ToLower(commitMessage), phrase) {
+			t.Errorf("Commit message should not contain explanatory text about its format: %s", phrase)
+		}
 	}
 }
