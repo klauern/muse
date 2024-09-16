@@ -31,8 +31,9 @@ func testLLMService(cfg *config.Config) error {
 
 	// Test the service with a simple prompt
 	ctx := context.Background()
-	testPrompt := "Hello, can you hear me?"
-	response, err := llmService.GenerateCommitMessage(ctx, testPrompt, "", llm.DefaultStyle)
+	testDiff := "This is a test diff"
+	testContext := "This is a test context"
+	response, err := llmService.GenerateCommitMessage(ctx, testDiff, testContext, llm.DefaultStyle)
 	if err != nil {
 		return fmt.Errorf("failed to generate test message: %w", err)
 	}
