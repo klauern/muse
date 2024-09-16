@@ -21,24 +21,8 @@ type LLMHook struct {
 }
 
 func (h *LLMHook) Run(commitMsgFile string, commitSource string, sha1 string) error {
-	var diff string
-	var err error
-
-	switch commitSource {
-	case "message":
-		// Normal commit
-		diff, err = getGitDiff("--cached")
-	case "commit":
-		// Amending a commit
-		diff, err = getGitDiff("HEAD^")
-	case "merge":
-		// Merge commit
-		diff, err = getMergeDiff()
-	default:
-		// Default to cached diff
-		diff, err = getGitDiff("--cached")
-	}
-
+	// Always get the staged changes
+	diff, err := getGitDiff()
 	if err != nil {
 		return fmt.Errorf("failed to get git diff: %w", err)
 	}
@@ -58,17 +42,9 @@ func (h *LLMHook) Run(commitMsgFile string, commitSource string, sha1 string) er
 	return nil
 }
 
-func getGitDiff(target string) (string, error) {
-	cmd := exec.Command("git", "diff", target)
-	output, err := cmd.Output()
-	if err != nil {
-		return "", err
-	}
-	return string(output), nil
-}
-
-func getMergeDiff() (string, error) {
-	cmd := exec.Command("git", "diff", "HEAD^1", "HEAD^2")
+func getGitDiff() (string, error) {
+	// Get the staged changes
+	cmd := exec.Command("git", "diff", "--cached")
 	output, err := cmd.Output()
 	if err != nil {
 		return "", err
