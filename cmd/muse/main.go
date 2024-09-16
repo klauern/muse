@@ -26,6 +26,7 @@ func main() {
 			cmd.NewUninstallCmd(cfg),
 			cmd.NewConfigureCmd(cfg),
 			cmd.NewGenerateCmd(cfg),
+			cmd.NewPrepareCommitMsgCmd(cfg),
 		},
 	}
 

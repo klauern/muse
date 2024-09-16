@@ -41,7 +41,7 @@ func installHook(config *config.Config) error {
 
 	// Write the hook content
 	hookContent := `#!/bin/sh
-go run cmd/muse/main.go prepare-commit-msg "$@"
+"$GOPATH/bin/muse" prepare-commit-msg "$@"
 `
 	if _, err := f.WriteString(hookContent); err != nil {
 		return fmt.Errorf("failed to write hook content: %w", err)
