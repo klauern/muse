@@ -51,7 +51,10 @@ func (h *LLMHook) Run(commitMsgFile string, commitSource string, sha1 string) er
 		fmt.Println(message)
 		fmt.Print("Do you want to use this commit message? (y/n): ")
 		var response string
-		fmt.Scanln(&response)
+		_, err := fmt.Scanln(&response)
+		if err != nil {
+			return fmt.Errorf("failed to read user input: %w", err)
+		}
 		if response != "y" && response != "Y" {
 			return fmt.Errorf("user rejected the generated commit message")
 		}
@@ -61,6 +64,8 @@ func (h *LLMHook) Run(commitMsgFile string, commitSource string, sha1 string) er
 	if err := os.WriteFile(commitMsgFile, []byte(message), 0644); err != nil {
 		return fmt.Errorf("failed to write commit message: %w", err)
 	}
+
+	fmt.Println("Commit message successfully generated and saved.")
 
 	return nil
 }
@@ -94,22 +99,11 @@ func NewHook(hookType string, cfg *config.Config) (PrepareCommitMsgHook, error) 
 	}
 }
 
+// DefaultHook is a no-op hook that doesn't modify the commit message
 type DefaultHook struct{}
 
 func (h *DefaultHook) Run(commitMsgFile string, commitSource string, sha1 string) error {
-	// Read the commit message
-	content, err := os.ReadFile(commitMsgFile)
-	if err != nil {
-		return fmt.Errorf("failed to read commit message file: %w", err)
-	}
-
-	// Modify the commit message (this is just a placeholder)
-	modifiedContent := []byte(fmt.Sprintf("Modified: %s", string(content)))
-
-	// Write the modified commit message back to the file
-	if err := os.WriteFile(commitMsgFile, modifiedContent, 0644); err != nil {
-		return fmt.Errorf("failed to write modified commit message: %w", err)
-	}
-
+	// This hook doesn't modify the commit message, so we just return nil
+	fmt.Println("DefaultHook: No modifications made to the commit message.")
 	return nil
 }
