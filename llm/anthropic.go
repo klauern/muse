@@ -60,14 +60,37 @@ func NewAnthropicService(apiKey, model string) *AnthropicService {
 	}
 }
 
+import (
+	"bytes"
+	"context"
+	"encoding/json"
+	"fmt"
+	"io"
+	"net/http"
+	"os"
+	"strings"
+
+	"github.com/klauern/pre-commit-llm/templates"
+)
+
 func (s *AnthropicService) GenerateCommitMessage(ctx context.Context, diff, context string) (string, error) {
-	prompt := fmt.Sprintf("Generate a concise commit message for the following diff:\n\n%s\n\nContext: %s", diff, context)
+	var promptBuffer bytes.Buffer
+	err := templates.CommitMessageTemplate.Execute(&promptBuffer, struct {
+		Diff    string
+		Context string
+	}{
+		Diff:    diff,
+		Context: context,
+	})
+	if err != nil {
+		return "", fmt.Errorf("failed to execute template: %w", err)
+	}
 
 	req := Request{
 		Model:     s.model,
-		MaxTokens: 100, // Adjust as needed for commit message length
+		MaxTokens: 150, // Increased to allow for a more detailed commit message
 		Messages: []Message{
-			{Role: "user", Content: prompt},
+			{Role: "user", Content: promptBuffer.String()},
 		},
 	}
 
