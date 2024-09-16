@@ -1,0 +1,33 @@
+# https://taskfile.dev
+
+version: '3'
+
+tasks:
+  build:
+    desc: "Build the Go binary"
+    cmds:
+      - go build -o bin/mybinary ./cmd/...
+
+  test:
+    desc: "Run Go tests"
+    cmds:
+      - go test ./...
+
+  format:
+    desc: "Format Go code"
+    cmds:
+      - go fmt ./...
+
+  hooks:
+    desc: "Run hooks defined in lefthook.yml"
+    cmds:
+      - lefthook run pre-commit
+
+
+  lint:
+    desc: "Run linters"
+    cmds:
+      - golangci-lint run --fast --timeout=5m ./...
+    sources:
+      - "**/*.go"
+
