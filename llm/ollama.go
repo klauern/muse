@@ -3,6 +3,8 @@ package llm
 import (
 	"context"
 	"fmt"
+
+	"github.com/klauern/pre-commit-llm/config"
 )
 
 type OllamaProvider struct{}

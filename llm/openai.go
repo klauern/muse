@@ -4,6 +4,8 @@ import (
 	"bytes"
 	"context"
 	"fmt"
+
+	"github.com/klauern/pre-commit-llm/config"
 )
 
 type OpenAIProvider struct{}

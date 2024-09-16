@@ -9,6 +9,8 @@ import (
 	"net/http"
 	"os"
 	"strings"
+
+	"github.com/klauern/pre-commit-llm/config"
 )
 
 const (
