@@ -71,12 +71,22 @@ func (s *AnthropicService) GenerateCommitMessage(ctx context.Context, diff, cont
 		Type    string
 		Format  string
 		Details string
+		Scope   string
+		Subject string
+		Body    string
+		Footer  string
+		Extra   map[string]string
 	}{
 		Diff:    diff,
 		Context: context,
 		Type:    "feat", // Default to "feat" for now, you might want to determine this dynamically
 		Format:  style.String(),
 		Details: diff, // Use the diff as details for now
+		Scope:   "",   // You might want to determine this based on the diff
+		Subject: "",   // This will be filled by the LLM
+		Body:    "",   // This will be filled by the LLM
+		Footer:  "",   // This will be filled by the LLM
+		Extra:   make(map[string]string), // Initialize an empty map for any extra fields
 	})
 	if err != nil {
 		return "", fmt.Errorf("failed to execute template: %w", err)

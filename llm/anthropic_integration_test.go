@@ -52,7 +52,29 @@ func TestAnthropicService_GenerateCommitMessage_Integration(t *testing.T) {
 		t.Error("Generated commit message should not be empty")
 	}
 
-	if !strings.Contains(strings.ToLower(commitMessage), "xdg") {
-		t.Error("Commit message should mention XDG specification")
+	// Check for the presence of key components in the commit message
+	expectedComponents := []string{
+		"feat", // The type of change
+		"config", // The scope of the change
+		"XDG", // A key term from the change
+		":", // Separator in conventional commit format
+	}
+
+	for _, component := range expectedComponents {
+		if !strings.Contains(commitMessage, component) {
+			t.Errorf("Commit message should contain '%s', but it doesn't.\nCommit message: %s", component, commitMessage)
+		}
+	}
+
+	// Check the structure of the commit message
+	parts := strings.SplitN(commitMessage, "\n\n", 3)
+	if len(parts) < 2 {
+		t.Errorf("Commit message should have at least a subject and a body, separated by a blank line")
+	}
+
+	// Check the subject line (first line)
+	subjectLine := strings.SplitN(parts[0], ":", 2)
+	if len(subjectLine) != 2 {
+		t.Errorf("Subject line should be in the format 'type(scope): description'")
 	}
 }
