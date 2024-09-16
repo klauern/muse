@@ -3,7 +3,6 @@ package cmd
 import (
 	"context"
 	"fmt"
-	"os"
 
 	"github.com/klauern/pre-commit-llm/config"
 	"github.com/klauern/pre-commit-llm/llm"
