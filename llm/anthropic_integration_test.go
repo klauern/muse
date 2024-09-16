@@ -45,6 +45,9 @@ func TestAnthropicService_GenerateCommitMessage_Integration(t *testing.T) {
 		t.Fatalf("Failed to generate commit message: %v", err)
 	}
 
+	// Print the generated commit message for debugging
+	t.Logf("Generated commit message: %s", commitMessage)
+
 	if commitMessage == "" {
 		t.Error("Generated commit message should not be empty")
 	}

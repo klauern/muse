@@ -68,9 +68,11 @@ func (s *AnthropicService) GenerateCommitMessage(ctx context.Context, diff, cont
 	err := template.Execute(&promptBuffer, struct {
 		Diff    string
 		Context string
+		Type    string
 	}{
 		Diff:    diff,
 		Context: context,
+		Type:    "feat", // Default to "feat" for now, you might want to determine this dynamically
 	})
 	if err != nil {
 		return "", fmt.Errorf("failed to execute template: %w", err)
