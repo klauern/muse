@@ -21,11 +21,10 @@ const (
 type AnthropicProvider struct{}
 
 func (p *AnthropicProvider) NewService(config *config.LLMConfig) (LLMService, error) {
-	apiKey := os.Getenv("ANTHROPIC_API_KEY")
-	if apiKey == "" {
-		var ok bool
-		apiKey, ok = config.Extra["api_key"].(string)
-		if !ok {
+	apiKey, ok := config.Extra["api_key"].(string)
+	if !ok || apiKey == "" {
+		apiKey = os.Getenv("ANTHROPIC_API_KEY")
+		if apiKey == "" {
 			return nil, fmt.Errorf("Anthropic API key not found in config or environment. Please set ANTHROPIC_API_KEY environment variable or provide it in the config")
 		}
 	}
