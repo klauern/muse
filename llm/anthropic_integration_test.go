@@ -92,19 +92,19 @@ func TestAnthropicService_GenerateCommitMessage_Integration(t *testing.T) {
 	}
 
 	// Check that the commit message has a subject line and at least one bullet point
-	lines := strings.Split(strings.TrimSpace(commitMessage), "\n")
-	if len(lines) < 2 {
+	messageLines := strings.Split(strings.TrimSpace(commitMessage), "\n")
+	if len(messageLines) < 2 {
 		t.Errorf("Commit message should have a subject line and at least one bullet point")
 	}
 
 	// Check that the second line is blank (separating subject from body)
-	if len(lines) > 1 && lines[1] != "" {
+	if len(messageLines) > 1 && messageLines[1] != "" {
 		t.Errorf("Second line of commit message should be blank")
 	}
 
 	// Check that bullet points start with - or *
-	for i := 2; i < len(lines); i++ {
-		if !strings.HasPrefix(strings.TrimSpace(lines[i]), "-") && !strings.HasPrefix(strings.TrimSpace(lines[i]), "*") {
+	for i := 2; i < len(messageLines); i++ {
+		if !strings.HasPrefix(strings.TrimSpace(messageLines[i]), "-") && !strings.HasPrefix(strings.TrimSpace(messageLines[i]), "*") {
 			t.Errorf("Body lines should start with - or *")
 		}
 	}
