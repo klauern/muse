@@ -7,7 +7,7 @@ import (
 
 type OllamaProvider struct{}
 
-func (p *OllamaProvider) NewService(config map[string]interface{}) (LLMService, error) {
+func (p *OllamaProvider) NewService(config *config.LLMConfig) (LLMService, error) {
 	// TODO: Implement Ollama client initialization
 	return nil, fmt.Errorf("Ollama provider not implemented")
 }
