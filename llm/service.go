@@ -26,7 +26,7 @@ type LLMService interface {
 
 // LLMProvider defines the interface for creating LLM services
 type LLMProvider interface {
-	NewService(config map[string]interface{}) (LLMService, error)
+	NewService(config *config.LLMConfig) (LLMService, error)
 }
 
 var providers = make(map[string]LLMProvider)
