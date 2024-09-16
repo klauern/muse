@@ -3,10 +3,8 @@ package testdata
 import (
 	"os"
 	"path/filepath"
+	"strings"
 	"testing"
-
-	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
 )
 
 // LLMResponse represents the structure of an LLM's response
@@ -38,21 +36,33 @@ func TestLLMResponse(t *testing.T) {
 	// Read the diff file
 	diffPath := filepath.Join("diffs", "small.diff")
 	diffContent, err := os.ReadFile(diffPath)
-	require.NoError(t, err, "Failed to read diff file")
+	if err != nil {
+		t.Fatalf("Failed to read diff file: %v", err)
+	}
 
 	// Create an instance of the Anthropic provider
 	provider := &AnthropicProvider{}
 
 	// Generate the response
 	response, err := provider.GenerateResponse(string(diffContent))
-	require.NoError(t, err, "Failed to generate LLM response")
+	if err != nil {
+		t.Fatalf("Failed to generate LLM response: %v", err)
+	}
 
 	// Assert the response
-	assert.NotEmpty(t, response.CommitMessage, "Commit message should not be empty")
-	assert.NotEmpty(t, response.Explanation, "Explanation should not be empty")
+	if response.CommitMessage == "" {
+		t.Error("Commit message should not be empty")
+	}
+	if response.Explanation == "" {
+		t.Error("Explanation should not be empty")
+	}
 
 	// You can add more specific assertions here based on expected output
 	// For example:
-	// assert.Contains(t, response.CommitMessage, "XDG specification", "Commit message should mention XDG specification")
-	// assert.Contains(t, response.Explanation, "configuration file path", "Explanation should mention configuration file path")
+	if !strings.Contains(response.CommitMessage, "XDG specification") {
+		t.Error("Commit message should mention XDG specification")
+	}
+	if !strings.Contains(response.Explanation, "configuration file path") {
+		t.Error("Explanation should mention configuration file path")
+	}
 }
