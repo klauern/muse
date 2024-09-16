@@ -19,6 +19,17 @@ const (
 	GitmojisStyle
 )
 
+func (cs CommitStyle) String() string {
+	switch cs {
+	case ConventionalStyle:
+		return "conventional"
+	case GitmojisStyle:
+		return "gitmojis"
+	default:
+		return "default"
+	}
+}
+
 // LLMService defines the interface for LLM providers
 type LLMService interface {
 	GenerateCommitMessage(ctx context.Context, diff, context string, style CommitStyle) (string, error)
