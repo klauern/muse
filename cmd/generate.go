@@ -38,11 +38,12 @@ func generateCommitMessage(c *cli.Context, cfg *config.Config) error {
 	provider := c.String("provider")
 	style := c.String("style")
 
-	// Override the provider in the config
-	cfg.LLM.Provider = provider
+	// Create a copy of the LLM config and override the provider
+	llmConfig := cfg.LLM
+	llmConfig.Provider = provider
 
 	// Create LLM service
-	llmService, err := llm.NewLLMService(&cfg.LLM)
+	llmService, err := llm.NewLLMService(&llmConfig)
 	if err != nil {
 		return fmt.Errorf("failed to create LLM service: %w", err)
 	}

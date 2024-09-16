@@ -38,15 +38,16 @@ func configureHook(c *cli.Context, config *config.Config) error {
 
 	v := viper.GetViper()
 
-	enabled := c.Bool("enabled")
-
-	v.Set("hook.enabled", enabled)
+	if c.IsSet("enabled") {
+		enabled := c.Bool("enabled")
+		v.Set("hook.enabled", enabled)
+		fmt.Printf("Configuration updated: Enabled=%v\n", enabled)
+	}
 
 	if err := v.WriteConfig(); err != nil {
 		return fmt.Errorf("failed to write config: %w", err)
 	}
 
-	fmt.Printf("Configuration updated: Enabled=%v\n", enabled)
 	return nil
 }
 
