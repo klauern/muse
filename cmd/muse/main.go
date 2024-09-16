@@ -27,6 +27,7 @@ func main() {
 			cmd.NewConfigureCmd(cfg),
 			cmd.NewGenerateCmd(cfg),
 			cmd.NewPrepareCommitMsgCmd(cfg),
+			cmd.NewTestCmd(cfg),
 		},
 	}
 
