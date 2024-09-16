@@ -49,6 +49,7 @@ type Request struct {
 	Model     string    `json:"model"`
 	MaxTokens int       `json:"max_tokens"`
 	Messages  []Message `json:"messages"`
+	System    string    `json:"system"`
 }
 
 type Response struct {
@@ -97,8 +98,8 @@ func (s *AnthropicService) GenerateCommitMessage(ctx context.Context, diff, cont
 	req := Request{
 		Model:     s.model,
 		MaxTokens: 500, // Increased to allow for a more detailed commit message
+		System:    "Generate a concise git commit message. The first line should follow the conventional commit format. Then, provide a detailed list of changes without explanations. Focus on what was changed, not why.",
 		Messages: []Message{
-			{Role: "system", Content: "Generate a concise git commit message. The first line should follow the conventional commit format. Then, provide a detailed list of changes without explanations. Focus on what was changed, not why."},
 			{Role: "user", Content: promptBuffer.String()},
 		},
 	}
