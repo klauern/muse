@@ -23,7 +23,7 @@ func (p *AnthropicProvider) NewService(config map[string]interface{}) (LLMServic
 		var ok bool
 		apiKey, ok = config["api_key"].(string)
 		if !ok {
-			return nil, fmt.Errorf("Anthropic API key not found in config or environment")
+			return nil, fmt.Errorf("Anthropic API key not found in config or environment. Please set ANTHROPIC_API_KEY environment variable or provide it in the config")
 		}
 	}
 	model, ok := config["model"].(string)
