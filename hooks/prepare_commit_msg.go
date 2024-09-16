@@ -27,9 +27,12 @@ func (h *LLMHook) Run(commitMsgFile string, commitSource string, sha1 string) er
 		return fmt.Errorf("failed to get git diff: %w", err)
 	}
 
+	// Get the commit style from the configuration
+	commitStyle := h.Config.Hook.CommitStyle
+
 	// Generate the commit message
 	ctx := context.Background()
-	message, err := h.Generator.Generate(ctx, diff)
+	message, err := h.Generator.Generate(ctx, diff, commitStyle)
 	if err != nil {
 		return fmt.Errorf("failed to generate commit message: %w", err)
 	}

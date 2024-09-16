@@ -8,6 +8,15 @@ import (
 	"github.com/klauern/pre-commit-llm/templates"
 )
 
+import (
+	"context"
+	"fmt"
+	"strings"
+
+	"github.com/klauern/pre-commit-llm/config"
+	"github.com/klauern/pre-commit-llm/templates"
+)
+
 // CommitStyle represents different commit message styles
 type CommitStyle int
 
