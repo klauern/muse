@@ -3,7 +3,6 @@ package cmd
 import (
 	"context"
 	"fmt"
-	"os"
 	"os/exec"
 
 	"github.com/klauern/pre-commit-llm/commit"
@@ -26,7 +25,7 @@ func NewGenerateCmd(cfg *config.Config) *cli.Command {
 			&cli.StringFlag{
 				Name:  "style",
 				Usage: "Commit message style (default, conventional, gitmojis)",
-				Value: cfg.Hook.CommitStyle,
+				Value: cfg.HookConfig.CommitStyle,
 			},
 		},
 		Action: func(c *cli.Context) error {
