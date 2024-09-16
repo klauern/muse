@@ -1,0 +1,36 @@
+# Muse Configuration File
+
+# Hook Configuration
+hook:
+  # Type of hook (currently only 'prepare-commit-msg' is supported)
+  type: "prepare-commit-msg"
+
+  # LLM provider to use for generating commit messages
+  llm_provider: "openai"
+
+  # Style of commit messages to generate
+  # Options: "default", "conventional", "gitmoji"
+  commit_style: "conventional"
+
+  # If true, the hook will only show the generated message without applying it
+  dry_run: false
+
+  # If true, the hook will show the generated message and ask for confirmation before applying
+  preview: true
+
+# LLM (Language Model) Configuration
+llm:
+  # Provider of the language model
+  # Options: "openai", "anthropic", etc.
+  provider: "openai"
+
+  # Configuration specific to the chosen provider
+  config:
+    # OpenAI specific configuration
+    model: "gpt-3.5-turbo"
+    temperature: 0.7
+    max_tokens: 100
+
+    # Add other provider-specific configurations as needed
+
+# Add any other global configurations here
