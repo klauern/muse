@@ -1,5 +1,3 @@
-# https://taskfile.dev
-
 version: '3'
 
 tasks:
@@ -23,7 +21,6 @@ tasks:
     cmds:
       - lefthook run pre-commit
 
-
   lint:
     desc: "Run linters"
     cmds:
@@ -31,3 +28,7 @@ tasks:
     sources:
       - "**/*.go"
 
+  install:
+    desc: "install locally"
+    cmds:
+      - go install ./cmd/muse

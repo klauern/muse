@@ -1,10 +1,14 @@
 package cmd
 
 import (
+	"context"
 	"fmt"
+	"os"
 
+	"github.com/klauern/pre-commit-llm/commit"
 	"github.com/klauern/pre-commit-llm/config"
-	"github.com/klauern/pre-commit-llm/hooks"
+	"github.com/klauern/pre-commit-llm/llm"
+	"github.com/klauern/pre-commit-llm/rag"
 	"github.com/urfave/cli/v2"
 )
 
@@ -24,13 +28,40 @@ func runPrepareCommitMsg(c *cli.Context, cfg *config.Config) error {
 	}
 
 	commitMsgFile := c.Args().Get(0)
-	commitSource := c.Args().Get(1)
-	sha1 := c.Args().Get(2)
 
-	hook, err := hooks.NewHook(cfg)
+	// Get the git diff
+	diff, err := getGitDiff()
 	if err != nil {
-		return fmt.Errorf("failed to create hook: %w", err)
+		return fmt.Errorf("failed to get git diff: %w", err)
 	}
 
-	return hook.Run(commitMsgFile, commitSource, sha1)
+	// Create LLM service
+	llmService, err := llm.NewLLMService(&cfg.LLM)
+	if err != nil {
+		return fmt.Errorf("failed to create LLM service: %w", err)
+	}
+
+	// Create RAG service
+	ragService := &rag.GitRAGService{}
+
+	// Create commit message generator
+	generator := &commit.CommitMessageGenerator{
+		LLMService: llmService,
+		RAGService: ragService,
+	}
+
+	// Generate commit message
+	ctx := context.Background()
+	message, err := generator.Generate(ctx, diff, cfg.HookConfig.CommitStyle)
+	if err != nil {
+		return fmt.Errorf("failed to generate commit message: %w", err)
+	}
+
+	// Write the generated message to the commit message file
+	if err := os.WriteFile(commitMsgFile, []byte(message), 0o644); err != nil {
+		return fmt.Errorf("failed to write commit message: %w", err)
+	}
+
+	fmt.Println("Commit message successfully generated and saved.")
+	return nil
 }
