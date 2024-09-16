@@ -22,6 +22,6 @@ func NewLLMClient(cfg *config.LLMConfig) (*LLMClient, error) {
 	}, nil
 }
 
-func (c *LLMClient) GenerateCommitMessage(ctx context.Context, diff, context string) (string, error) {
-	return c.service.GenerateCommitMessage(ctx, diff, context)
+func (c *LLMClient) GenerateCommitMessage(ctx context.Context, diff, context string, style CommitStyle) (string, error) {
+	return c.service.GenerateCommitMessage(ctx, diff, context, style)
 }

@@ -3,15 +3,8 @@ package llm
 import (
 	"context"
 	"fmt"
-
-	"github.com/klauern/pre-commit-llm/config"
-	"github.com/klauern/pre-commit-llm/templates"
-)
-
-import (
-	"context"
-	"fmt"
 	"strings"
+	"text/template"
 
 	"github.com/klauern/pre-commit-llm/config"
 	"github.com/klauern/pre-commit-llm/templates"

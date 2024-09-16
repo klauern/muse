@@ -1,6 +1,7 @@
 package llm
 
 import (
+	"bytes"
 	"context"
 	"encoding/json"
 	"fmt"
@@ -60,19 +61,6 @@ func NewAnthropicService(apiKey, model string) *AnthropicService {
 	}
 }
 
-import (
-	"bytes"
-	"context"
-	"encoding/json"
-	"fmt"
-	"io"
-	"net/http"
-	"os"
-	"strings"
-
-	"github.com/klauern/pre-commit-llm/templates"
-)
-
 func (s *AnthropicService) GenerateCommitMessage(ctx context.Context, diff, context string, style CommitStyle) (string, error) {
 	template := GetCommitTemplate(style)
 	var promptBuffer bytes.Buffer
@@ -129,7 +117,6 @@ func (s *AnthropicService) GenerateCommitMessage(ctx context.Context, diff, cont
 
 	return strings.TrimSpace(response.Content), nil
 }
-
 
 func init() {
 	RegisterProvider("anthropic", &AnthropicProvider{})
