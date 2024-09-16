@@ -29,7 +29,7 @@ func (h *LLMHook) Run(commitMsgFile string, commitSource string, sha1 string) er
 	}
 
 	// Get the commit style from the configuration
-	commitStyle := h.Config.Hook.CommitStyle
+	commitStyle := h.Config.HookConfig.CommitStyle
 
 	// Generate the commit message
 	ctx := context.Background()
@@ -39,14 +39,14 @@ func (h *LLMHook) Run(commitMsgFile string, commitSource string, sha1 string) er
 	}
 
 	// Check if dry run mode is enabled
-	if h.Config.Hook.DryRun {
+	if h.Config.HookConfig.DryRun {
 		fmt.Println("Dry run mode: Generated commit message:")
 		fmt.Println(message)
 		return nil
 	}
 
 	// Check if preview mode is enabled
-	if h.Config.Hook.Preview {
+	if h.Config.HookConfig.Preview {
 		fmt.Println("Preview mode: Generated commit message:")
 		fmt.Println(message)
 		fmt.Print("Do you want to use this commit message? (y/n): ")
@@ -80,9 +80,8 @@ func getGitDiff() (string, error) {
 	return string(output), nil
 }
 
-func NewHook(hookType string, cfg *config.Config) (PrepareCommitMsgHook, error) {
-	switch hookType {
-	case "llm":
+func NewHook(cfg *config.Config) (PrepareCommitMsgHook, error) {
+	if cfg.HookConfig.Enabled {
 		llmService, err := llm.NewLLMService(&cfg.LLM)
 		if err != nil {
 			return nil, fmt.Errorf("failed to create LLM service: %w", err)
@@ -94,9 +93,8 @@ func NewHook(hookType string, cfg *config.Config) (PrepareCommitMsgHook, error) 
 			RAGService: ragService,
 		}
 		return &LLMHook{Generator: generator, Config: cfg}, nil
-	default:
-		return &DefaultHook{}, nil
 	}
+	return &DefaultHook{}, nil
 }
 
 // DefaultHook is a no-op hook that doesn't modify the commit message
