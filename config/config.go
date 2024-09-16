@@ -19,8 +19,9 @@ type LLMConfig struct {
 }
 
 type HookConfig struct {
-	Enabled bool   `mapstructure:"enabled"`
-	Type    string `mapstructure:"type"`
+	Enabled     bool   `mapstructure:"enabled"`
+	Type        string `mapstructure:"type"`
+	LLMProvider string `mapstructure:"llm_provider"`
 }
 
 func LoadConfig() (*Config, error) {
@@ -31,6 +32,7 @@ func LoadConfig() (*Config, error) {
 	// Set default values
 	v.SetDefault("hook.enabled", false)
 	v.SetDefault("hook.type", "default")
+	v.SetDefault("hook.llm_provider", "anthropic") // Default to Anthropic as the LLM provider
 
 	// Add config search paths
 	v.AddConfigPath(".")
