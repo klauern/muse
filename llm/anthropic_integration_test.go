@@ -116,9 +116,11 @@ func TestAnthropicService_GenerateCommitMessage_Integration(t *testing.T) {
 	})
 
 	t.Run("InvalidStyle", func(t *testing.T) {
-		_, err = service.GenerateCommitMessage(ctx, string(diffContent), "", CommitStyle(999))
-		if err == nil || !strings.Contains(err.Error(), "invalid commit style") {
-			t.Errorf("Expected error for invalid commit style, got: %v", err)
+		_, err := service.GenerateCommitMessage(ctx, string(diffContent), "", CommitStyle(999))
+		if err == nil {
+			t.Error("Expected error for invalid commit style, but got nil")
+		} else if !strings.Contains(err.Error(), "invalid commit style") {
+			t.Errorf("Expected error message to contain 'invalid commit style', got: %v", err)
 		}
 	})
 }

@@ -79,6 +79,11 @@ func (s *AnthropicService) GenerateCommitMessage(ctx context.Context, diff, cont
 		return "", fmt.Errorf("invalid commit style: %v", style)
 	}
 
+	// Early return if the style is invalid (e.g., 999)
+	if style < 0 || style >= CommitStyleCount {
+		return "", fmt.Errorf("invalid commit style: %v", style)
+	}
+
 	var formatBuffer bytes.Buffer
 	err := template.Execute(&formatBuffer, struct {
 		Type    string
