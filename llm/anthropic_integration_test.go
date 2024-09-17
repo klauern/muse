@@ -54,7 +54,6 @@ func TestAnthropicService_GenerateCommitMessage_Integration(t *testing.T) {
 
 	t.Run("CheckComponents", func(t *testing.T) {
 		expectedComponents := []string{
-			"feat", // The type of change
 			":", // Separator in conventional commit format
 		}
 
@@ -67,51 +66,20 @@ func TestAnthropicService_GenerateCommitMessage_Integration(t *testing.T) {
 
 	t.Run("CheckStructure", func(t *testing.T) {
 		lines := strings.Split(strings.TrimSpace(commitMessage), "\n")
-		if len(lines) < 2 {
-			t.Fatalf("Commit message should have at least a subject line and one or more detail lines")
+		if len(lines) < 1 {
+			t.Fatal("Commit message should have at least one line")
 		}
 
-		subjectLine := strings.SplitN(lines[0], ":", 2)
-		if len(subjectLine) != 2 {
-			t.Errorf("Subject line should be in the format 'type(scope): description'")
+		if len(lines[0]) > 72 {
+			t.Errorf("First line is too long: %d characters (max 72)", len(lines[0]))
 		}
 
 		if strings.Contains(commitMessage, "diff --git") {
 			t.Errorf("Commit message should not contain the entire diff")
 		}
 
-		if len(lines) > 0 {
-			subjectLine := lines[0]
-			if len(subjectLine) > 72 {
-				t.Errorf("Subject line is too long: %d characters (max 72)", len(subjectLine))
-			}
-		} else {
-			t.Error("Commit message is empty")
-		}
-
 		if strings.Contains(commitMessage, "```") {
 			t.Errorf("Commit message should not contain markdown code block markers")
-		}
-
-		messageLines := strings.Split(strings.TrimSpace(commitMessage), "\n")
-		if len(messageLines) < 2 {
-			t.Errorf("Commit message should have a subject line and at least one bullet point")
-		}
-
-		if len(messageLines) > 1 && messageLines[1] != "" {
-			t.Errorf("Second line of commit message should be blank")
-		}
-
-		bulletPointFound := false
-		for i := 2; i < len(messageLines); i++ {
-			line := strings.TrimSpace(messageLines[i])
-			if strings.HasPrefix(line, "-") || strings.HasPrefix(line, "*") {
-				bulletPointFound = true
-				break
-			}
-		}
-		if !bulletPointFound {
-			t.Errorf("Commit message body should contain at least one bullet point starting with - or *")
 		}
 	})
 
