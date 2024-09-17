@@ -9,8 +9,6 @@ import (
 	"path/filepath"
 	"strings"
 	"testing"
-
-	"github.com/klauern/pre-commit-llm/config"
 )
 
 func TestAnthropicService_GenerateCommitMessage_Integration(t *testing.T) {
@@ -20,11 +18,9 @@ func TestAnthropicService_GenerateCommitMessage_Integration(t *testing.T) {
 	}
 
 	provider := &AnthropicProvider{}
-	cfg := &config.LLMConfig{
-		Model: "claude-3-sonnet-20240229",
-		Extra: map[string]interface{}{
-			"api_key": apiKey,
-		},
+	cfg := map[string]interface{}{
+		"model":   "claude-3-sonnet-20240229",
+		"api_key": apiKey,
 	}
 
 	service, err := provider.NewService(cfg)
