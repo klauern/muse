@@ -9,8 +9,6 @@ import (
 	"net/http"
 	"os"
 	"strings"
-
-	"github.com/klauern/pre-commit-llm/config"
 )
 
 const (
@@ -20,7 +18,7 @@ const (
 
 type AnthropicProvider struct{}
 
-func (p *AnthropicProvider) NewService(config *LLMConfig[AnthropicConfig]) (LLMService, error) {
+func (p *AnthropicProvider) NewService(config map[string]interface{}) (LLMService, error) {
 	apiKey := config.Config.APIKey
 	if apiKey == "" {
 		apiKey = os.Getenv("ANTHROPIC_API_KEY")
