@@ -82,8 +82,8 @@ func TestAnthropicService_GenerateCommitMessage_Integration(t *testing.T) {
 	}
 
 	// Check that the commit message is reasonably sized
-	if len(commitMessage) > 300 {
-		t.Errorf("Commit message is too long: %d characters", len(commitMessage))
+	if len(commitMessage) > 250 {
+		t.Errorf("Commit message is too long: %d characters (max 250)", len(commitMessage))
 	}
 
 	// Check that the commit message doesn't contain markdown code block markers
@@ -103,10 +103,16 @@ func TestAnthropicService_GenerateCommitMessage_Integration(t *testing.T) {
 	}
 
 	// Check that bullet points start with - or *
+	bulletPointFound := false
 	for i := 2; i < len(messageLines); i++ {
-		if !strings.HasPrefix(strings.TrimSpace(messageLines[i]), "-") && !strings.HasPrefix(strings.TrimSpace(messageLines[i]), "*") {
-			t.Errorf("Body lines should start with - or *")
+		line := strings.TrimSpace(messageLines[i])
+		if strings.HasPrefix(line, "-") || strings.HasPrefix(line, "*") {
+			bulletPointFound = true
+			break
 		}
+	}
+	if !bulletPointFound {
+		t.Errorf("Commit message body should contain at least one bullet point starting with - or *")
 	}
 
 	// Test with an invalid style

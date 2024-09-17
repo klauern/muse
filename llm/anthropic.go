@@ -76,7 +76,7 @@ func NewAnthropicService(apiKey, model string) *AnthropicService {
 func (s *AnthropicService) GenerateCommitMessage(ctx context.Context, diff, context string, style CommitStyle) (string, error) {
 	template := GetCommitTemplate(style)
 	if template == nil {
-		return "", fmt.Errorf("invalid commit style")
+		return "", fmt.Errorf("invalid commit style: %v", style)
 	}
 
 	var formatBuffer bytes.Buffer
@@ -106,7 +106,7 @@ func (s *AnthropicService) GenerateCommitMessage(ctx context.Context, diff, cont
 
 	req := Request{
 		Model:     s.model,
-		MaxTokens: 300,
+		MaxTokens: 200,
 		System:    systemPrompt,
 		Messages: []Message{
 			{Role: "user", Content: fmt.Sprintf("Generate a commit message for this diff:\n\n%s\n\nAdditional context:\n%s", diff, context)},
