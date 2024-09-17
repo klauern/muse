@@ -99,7 +99,7 @@ func (s *AnthropicService) GenerateCommitMessage(ctx context.Context, diff, cont
 		return "", fmt.Errorf("failed to execute template: %w", err)
 	}
 
-	systemPrompt := fmt.Sprintf("You are a Git commit message generator. Create a concise commit message based on the provided diff, following this format:\n%s\nComplete the JSON structure below, filling in appropriate values for each field.", formatBuffer.String())
+	systemPrompt := fmt.Sprintf("You are a Git commit message generator. Create a concise commit message based on the provided diff, following this format:\n%s\nEnsure the subject line (first line) is no longer than 72 characters. Complete the JSON structure below, filling in appropriate values for each field.", formatBuffer.String())
 
 	partialCompletion := `{
   "type": "`

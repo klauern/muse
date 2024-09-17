@@ -81,10 +81,18 @@ func TestAnthropicService_GenerateCommitMessage_Integration(t *testing.T) {
 		t.Errorf("Commit message should not contain the entire diff")
 	}
 
-	// Check that the commit message is reasonably sized
-	if len(commitMessage) > 250 {
-		t.Errorf("Commit message is too long: %d characters (max 250)", len(commitMessage))
+	// Check that the first line (subject) is not too long
+	lines := strings.Split(commitMessage, "\n")
+	if len(lines) > 0 {
+		subjectLine := lines[0]
+		if len(subjectLine) > 72 {
+			t.Errorf("Subject line is too long: %d characters (max 72)", len(subjectLine))
+		}
+	} else {
+		t.Error("Commit message is empty")
 	}
+
+	// Remove the overall message length check
 
 	// Check that the commit message doesn't contain markdown code block markers
 	if strings.Contains(commitMessage, "```") {
@@ -117,7 +125,7 @@ func TestAnthropicService_GenerateCommitMessage_Integration(t *testing.T) {
 
 	// Test with an invalid style
 	_, err = service.GenerateCommitMessage(ctx, string(diffContent), "", CommitStyle(999))
-	if err == nil {
-		t.Error("Expected error for invalid commit style, but got nil")
+	if err == nil || !strings.Contains(err.Error(), "invalid commit style") {
+		t.Errorf("Expected error for invalid commit style, got: %v", err)
 	}
 }
