@@ -108,4 +108,10 @@ func TestAnthropicService_GenerateCommitMessage_Integration(t *testing.T) {
 			t.Errorf("Body lines should start with - or *")
 		}
 	}
+
+	// Test with an invalid style
+	_, err = service.GenerateCommitMessage(ctx, string(diffContent), "", CommitStyle(999))
+	if err == nil {
+		t.Error("Expected error for invalid commit style, but got nil")
+	}
 }
