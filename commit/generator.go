@@ -9,6 +9,10 @@ import (
 	"github.com/klauern/pre-commit-llm/rag"
 )
 
+type Generator interface {
+	Generate(ctx context.Context, diff string, commitStyle string) (string, error)
+}
+
 type CommitMessageGenerator struct {
 	LLMService llm.LLMService
 	RAGService rag.RAGService
