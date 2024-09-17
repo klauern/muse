@@ -54,8 +54,16 @@ type Request struct {
 
 type Response struct {
 	Content []struct {
+		Type string `json:"type"`
 		Text string `json:"text"`
 	} `json:"content"`
+}
+
+type CommitMessage struct {
+	Type    string   `json:"type"`
+	Scope   string   `json:"scope"`
+	Subject string   `json:"subject"`
+	Body    []string `json:"body"`
 }
 
 func NewAnthropicService(apiKey, model string) *AnthropicService {
@@ -66,41 +74,12 @@ func NewAnthropicService(apiKey, model string) *AnthropicService {
 }
 
 func (s *AnthropicService) GenerateCommitMessage(ctx context.Context, diff, context string, style CommitStyle) (string, error) {
-	template := GetCommitTemplate(style)
-	var promptBuffer bytes.Buffer
-	err := template.Execute(&promptBuffer, struct {
-		Diff    string
-		Context string
-		Type    string
-		Format  string
-		Details string
-		Scope   string
-		Subject string
-		Body    string
-		Footer  string
-		Extra   map[string]string
-	}{
-		Diff:    diff,
-		Context: context,
-		Type:    "feat", // Default to "feat" for now, you might want to determine this dynamically
-		Format:  style.String(),
-		Details: diff, // Use the diff as details for now
-		Scope:   "",   // You might want to determine this based on the diff
-		Subject: "",   // This will be filled by the LLM
-		Body:    "",   // This will be filled by the LLM
-		Footer:  "",   // This will be filled by the LLM
-		Extra:   make(map[string]string), // Initialize an empty map for any extra fields
-	})
-	if err != nil {
-		return "", fmt.Errorf("failed to execute template: %w", err)
-	}
-
 	req := Request{
 		Model:     s.model,
 		MaxTokens: 300, // Reduced to encourage more concise responses
-		System:    "You are a Git commit message generator. Create a concise, conventional commit message based on the provided diff. The message should have a brief subject line (type(scope): description) followed by a blank line and a short bullet list of key changes. Exclude file names, line numbers, and diff syntax. Focus only on the most important changes.",
+		System:    "You are a Git commit message generator. Create a concise, conventional commit message based on the provided diff. The message should have a brief subject line (type(scope): description) followed by a short bullet list of key changes. Exclude file names, line numbers, and diff syntax. Focus only on the most important changes. Respond in JSON format.",
 		Messages: []Message{
-			{Role: "user", Content: "Generate a commit message for this diff:\n\n" + diff},
+			{Role: "user", Content: fmt.Sprintf("Generate a commit message for this diff in JSON format:\n\n%s", diff)},
 		},
 	}
 
@@ -140,42 +119,23 @@ func (s *AnthropicService) GenerateCommitMessage(ctx context.Context, diff, cont
 		return "", fmt.Errorf("empty response from API")
 	}
 
-	// Extract the commit message from the fenced code block
-	fullResponse := response.Content[0].Text
-	commitMessage := extractCommitMessage(fullResponse)
-
-	return commitMessage, nil
-}
-
-func extractCommitMessage(response string) string {
-	// Remove any markdown code block markers
-	response = strings.ReplaceAll(response, "```", "")
-
-	// Trim any leading or trailing whitespace
-	response = strings.TrimSpace(response)
-
-	// Split the response into lines
-	lines := strings.Split(response, "\n")
-
-	// Ensure we have at least a subject line
-	if len(lines) == 0 {
-		return ""
+	// Extract the JSON commit message from the response
+	var commitMessage CommitMessage
+	err = json.Unmarshal([]byte(response.Content[0].Text), &commitMessage)
+	if err != nil {
+		return "", fmt.Errorf("failed to parse commit message JSON: %w", err)
 	}
 
-	// Keep the subject line and up to 5 bullet points
-	result := []string{lines[0]}
-	bulletPoints := 0
-	for i := 1; i < len(lines) && bulletPoints < 5; i++ {
-		line := strings.TrimSpace(lines[i])
-		if strings.HasPrefix(line, "-") || strings.HasPrefix(line, "*") {
-			result = append(result, line)
-			bulletPoints++
-		}
+	// Format the commit message
+	formattedMessage := fmt.Sprintf("%s(%s): %s\n\n", commitMessage.Type, commitMessage.Scope, commitMessage.Subject)
+	for _, bodyLine := range commitMessage.Body {
+		formattedMessage += fmt.Sprintf("- %s\n", bodyLine)
 	}
 
-	// Join the lines back together
-	return strings.Join(result, "\n")
+	return strings.TrimSpace(formattedMessage), nil
 }
+
+// The extractCommitMessage function is no longer needed as we're parsing JSON directly
 
 func init() {
 	RegisterProvider("anthropic", &AnthropicProvider{})
