@@ -45,9 +45,20 @@ func (g *CommitMessageGenerator) Generate(ctx context.Context, diff string, comm
 		message, err := g.LLMService.GenerateCommitMessage(ctx, diff, context, style)
 		if err == nil {
 			// Attempt to parse the JSON to ensure it's valid
-			var parsedMessage map[string]interface{}
-			if json.Unmarshal([]byte(message), &parsedMessage) == nil {
-				return message, nil
+			var parsedMessage struct {
+				Type    string `json:"type"`
+				Scope   string `json:"scope"`
+				Subject string `json:"subject"`
+				Body    string `json:"body"`
+			}
+			if err := json.Unmarshal([]byte(message), &parsedMessage); err == nil {
+				// Format the commit message
+				formattedMessage := fmt.Sprintf("%s(%s): %s\n\n%s", 
+					parsedMessage.Type, 
+					parsedMessage.Scope, 
+					parsedMessage.Subject, 
+					parsedMessage.Body)
+				return formattedMessage, nil
 			}
 		}
 		
