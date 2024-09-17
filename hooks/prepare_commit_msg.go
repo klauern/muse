@@ -17,7 +17,7 @@ type PrepareCommitMsgHook interface {
 }
 
 type LLMHook struct {
-	Generator *commit.CommitMessageGenerator
+	Generator commit.Generator
 	Config    *config.Config
 }
 

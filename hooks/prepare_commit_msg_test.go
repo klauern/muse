@@ -21,11 +21,8 @@ func (m *MockCommitMessageGenerator) Generate(ctx context.Context, diff string, 
 	return args.String(0), args.Error(1)
 }
 
-// Update LLMHook to use the mock interface
-type LLMHook struct {
-	Generator commit.Generator
-	Config    *config.Config
-}
+// Ensure MockCommitMessageGenerator implements commit.Generator
+var _ commit.Generator = (*MockCommitMessageGenerator)(nil)
 
 func TestLLMHook_Run(t *testing.T) {
 	// Create a temporary file for the commit message
