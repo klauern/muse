@@ -26,7 +26,7 @@ Please generate a commit message following this format{{.Extra}}.
 `
 
 	createTemplate := func(name, typ, format, details, extra string) *template.Template {
-		return template.Must(template.New(name).Parse(commonFormat))
+		return template.Must(template.New(name).Parse(commonFormat)).Option("missingkey=error")
 	}
 
 	DefaultCommitTemplate = createTemplate(

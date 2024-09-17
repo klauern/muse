@@ -78,11 +78,28 @@ func (s *AnthropicService) GenerateCommitMessage(ctx context.Context, diff, cont
 	if template == nil {
 		return "", fmt.Errorf("invalid commit style")
 	}
-	formatTemplate := template.Lookup("Format")
-	if formatTemplate == nil {
-		return "", fmt.Errorf("format template not found")
+
+	var formatBuffer bytes.Buffer
+	err := template.Execute(&formatBuffer, struct {
+		Type    string
+		Diff    string
+		Context string
+		Format  string
+		Details string
+		Extra   string
+	}{
+		Type:    template.Name(),
+		Diff:    diff,
+		Context: context,
+		Format:  "{{.Format}}",
+		Details: "{{.Details}}",
+		Extra:   "{{.Extra}}",
+	})
+	if err != nil {
+		return "", fmt.Errorf("failed to execute template: %w", err)
 	}
-	systemPrompt := fmt.Sprintf("You are a Git commit message generator. Create a concise commit message based on the provided diff, following this format:\n%s\nComplete the JSON structure below, filling in appropriate values for each field.", formatTemplate.Root.String())
+
+	systemPrompt := fmt.Sprintf("You are a Git commit message generator. Create a concise commit message based on the provided diff, following this format:\n%s\nComplete the JSON structure below, filling in appropriate values for each field.", formatBuffer.String())
 
 	partialCompletion := `{
   "type": "`
