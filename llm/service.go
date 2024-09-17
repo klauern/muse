@@ -37,7 +37,7 @@ type LLMService interface {
 
 // LLMProvider defines the interface for creating LLM services
 type LLMProvider interface {
-	NewService(config *LLMConfig[any]) (LLMService, error)
+	NewService(config map[string]interface{}) (LLMService, error)
 }
 
 var providers = make(map[string]LLMProvider)
@@ -53,7 +53,7 @@ func NewLLMService(cfg *config.LLMConfig) (LLMService, error) {
 	if !ok {
 		return nil, fmt.Errorf("unsupported LLM provider: %s", cfg.Provider)
 	}
-	return provider.NewService(cfg)
+	return provider.NewService(cfg.Config)
 }
 
 // GetCommitTemplate returns the appropriate template based on the commit style
