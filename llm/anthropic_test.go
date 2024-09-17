@@ -3,8 +3,6 @@ package llm
 import (
 	"os"
 	"testing"
-
-	"github.com/klauern/pre-commit-llm/config"
 )
 
 func TestAnthropicProvider_NewService(t *testing.T) {
@@ -44,12 +42,11 @@ func TestAnthropicProvider_NewService(t *testing.T) {
 			os.Setenv("ANTHROPIC_API_KEY", tc.envAPIKey)
 
 			provider := &AnthropicProvider{}
-			cfg := &config.LLMConfig{
-				Model: "claude-3-sonnet-20240229",
-				Extra: map[string]interface{}{},
+			cfg := map[string]interface{}{
+				"model": "claude-3-sonnet-20240229",
 			}
 			if tc.configAPIKey != "" {
-				cfg.Extra["api_key"] = tc.configAPIKey
+				cfg["api_key"] = tc.configAPIKey
 			}
 
 			service, err := provider.NewService(cfg)
