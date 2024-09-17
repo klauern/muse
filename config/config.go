@@ -4,17 +4,20 @@ import (
 	"os"
 	"path/filepath"
 
-	"github.com/klauern/pre-commit-llm/llm"
 	"github.com/mitchellh/mapstructure"
 	"github.com/spf13/viper"
 )
 
 type Config struct {
-	HookConfig HookConfig              `mapstructure:"hook"`
-	LLM        llm.LLMConfig[any]      `mapstructure:"llm"`
+	HookConfig HookConfig `mapstructure:"hook"`
+	LLM        LLMConfig  `mapstructure:"llm"`
 }
 
-// LLMConfig is now defined in the llm package
+// LLMConfig represents the configuration for the LLM service
+type LLMConfig struct {
+	Provider string                 `mapstructure:"provider"`
+	Config   map[string]interface{} `mapstructure:"config"`
+}
 
 type HookConfig struct {
 	Enabled     bool   `mapstructure:"enabled"`

@@ -10,14 +10,16 @@ import (
 
 type OpenAIProvider struct{}
 
-func (p *OpenAIProvider) NewService(config *LLMConfig[OpenAIConfig]) (LLMService, error) {
-	if config.Config.APIKey == "" {
+func (p *OpenAIProvider) NewService(config map[string]interface{}) (LLMService, error) {
+	apiKey, ok := config["api_key"].(string)
+	if !ok || apiKey == "" {
 		return nil, fmt.Errorf("OpenAI API key not found in config")
 	}
-	if config.Config.Model == "" {
+	model, ok := config["model"].(string)
+	if !ok || model == "" {
 		return nil, fmt.Errorf("OpenAI model not found in config")
 	}
-	return &OpenAIService{apiKey: config.Config.APIKey, model: config.Config.Model}, nil
+	return &OpenAIService{apiKey: apiKey, model: model}, nil
 }
 
 type OpenAIService struct {
