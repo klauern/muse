@@ -60,10 +60,10 @@ type Response struct {
 }
 
 type CommitMessage struct {
-	Type    string   `json:"type"`
-	Scope   string   `json:"scope"`
-	Subject string   `json:"subject"`
-	Body    []string `json:"body"`
+	Type    string      `json:"type"`
+	Scope   string      `json:"scope"`
+	Subject string      `json:"subject"`
+	Body    interface{} `json:"body"`
 }
 
 func NewAnthropicService(apiKey, model string) *AnthropicService {
@@ -154,7 +154,12 @@ func (s *AnthropicService) GenerateCommitMessage(ctx context.Context, diff, cont
 	fullJSON := partialCompletion + response.Content[0].Text
 
 	// Parse the JSON into a CommitMessage struct
-	var commitMessage CommitMessage
+	var commitMessage struct {
+		Type    string      `json:"type"`
+		Scope   string      `json:"scope"`
+		Subject string      `json:"subject"`
+		Body    interface{} `json:"body"`
+	}
 	err = json.Unmarshal([]byte(fullJSON), &commitMessage)
 	if err != nil {
 		return "", fmt.Errorf("failed to parse commit message JSON: %w", err)
@@ -162,8 +167,17 @@ func (s *AnthropicService) GenerateCommitMessage(ctx context.Context, diff, cont
 
 	// Format the commit message
 	formattedMessage := fmt.Sprintf("%s(%s): %s\n\n", commitMessage.Type, commitMessage.Scope, commitMessage.Subject)
-	for _, bodyLine := range commitMessage.Body {
-		formattedMessage += fmt.Sprintf("- %s\n", bodyLine)
+
+	// Handle body based on its type
+	switch body := commitMessage.Body.(type) {
+	case string:
+		formattedMessage += fmt.Sprintf("- %s\n", body)
+	case []interface{}:
+		for _, line := range body {
+			if str, ok := line.(string); ok {
+				formattedMessage += fmt.Sprintf("- %s\n", str)
+			}
+		}
 	}
 
 	return strings.TrimSpace(formattedMessage), nil
