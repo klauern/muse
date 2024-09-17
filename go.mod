@@ -1,8 +1,8 @@
 module github.com/klauern/pre-commit-llm
 
-go 1.23
+go 1.22
 
-toolchain go1.23.1
+toolchain go1.22.1
 
 require (
 	github.com/mitchellh/mapstructure v1.5.0
