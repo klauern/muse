@@ -75,7 +75,14 @@ func NewAnthropicService(apiKey, model string) *AnthropicService {
 
 func (s *AnthropicService) GenerateCommitMessage(ctx context.Context, diff, context string, style CommitStyle) (string, error) {
 	template := GetCommitTemplate(style)
-	systemPrompt := fmt.Sprintf("You are a Git commit message generator. Create a concise commit message based on the provided diff, following this format:\n%s\nComplete the JSON structure below, filling in appropriate values for each field.", template.Lookup("Format").Root.String())
+	if template == nil {
+		return "", fmt.Errorf("invalid commit style")
+	}
+	formatTemplate := template.Lookup("Format")
+	if formatTemplate == nil {
+		return "", fmt.Errorf("format template not found")
+	}
+	systemPrompt := fmt.Sprintf("You are a Git commit message generator. Create a concise commit message based on the provided diff, following this format:\n%s\nComplete the JSON structure below, filling in appropriate values for each field.", formatTemplate.Root.String())
 
 	partialCompletion := `{
   "type": "`
