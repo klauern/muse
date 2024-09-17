@@ -82,7 +82,6 @@ func TestAnthropicService_GenerateCommitMessage_Integration(t *testing.T) {
 	}
 
 	// Check that the first line (subject) is not too long
-	lines := strings.Split(commitMessage, "\n")
 	if len(lines) > 0 {
 		subjectLine := lines[0]
 		if len(subjectLine) > 72 {
@@ -91,8 +90,6 @@ func TestAnthropicService_GenerateCommitMessage_Integration(t *testing.T) {
 	} else {
 		t.Error("Commit message is empty")
 	}
-
-	// Remove the overall message length check
 
 	// Check that the commit message doesn't contain markdown code block markers
 	if strings.Contains(commitMessage, "```") {
