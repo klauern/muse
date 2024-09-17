@@ -4,22 +4,17 @@ import (
 	"os"
 	"path/filepath"
 
+	"github.com/klauern/pre-commit-llm/llm"
 	"github.com/mitchellh/mapstructure"
 	"github.com/spf13/viper"
 )
 
 type Config struct {
-	HookConfig HookConfig `mapstructure:"hook"`
-	LLM        LLMConfig  `mapstructure:"llm"`
+	HookConfig HookConfig              `mapstructure:"hook"`
+	LLM        llm.LLMConfig[any]      `mapstructure:"llm"`
 }
 
-type LLMConfig struct {
-	Provider    string                 `mapstructure:"provider"`
-	Model       string                 `mapstructure:"model"`
-	Temperature float32                `mapstructure:"temperature"`
-	MaxTokens   int                    `mapstructure:"max_tokens"`
-	Extra       map[string]interface{} `mapstructure:",remain"`
-}
+// LLMConfig is now defined in the llm package
 
 type HookConfig struct {
 	Enabled     bool   `mapstructure:"enabled"`
