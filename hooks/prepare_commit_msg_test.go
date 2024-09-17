@@ -21,6 +21,12 @@ func (m *MockCommitMessageGenerator) Generate(ctx context.Context, diff string, 
 	return args.String(0), args.Error(1)
 }
 
+// Update LLMHook to use the mock interface
+type LLMHook struct {
+	Generator commit.Generator
+	Config    *config.Config
+}
+
 func TestLLMHook_Run(t *testing.T) {
 	// Create a temporary file for the commit message
 	tmpfile, err := os.CreateTemp("", "commit-msg")
@@ -34,7 +40,7 @@ func TestLLMHook_Run(t *testing.T) {
 
 	// Create the LLMHook
 	hook := &LLMHook{
-		Generator: &commit.CommitMessageGenerator{},
+		Generator: mockGenerator,
 		Config: &config.Config{
 			HookConfig: config.HookConfig{
 				CommitStyle: "conventional",
@@ -46,9 +52,6 @@ func TestLLMHook_Run(t *testing.T) {
 
 	// Set up the mock expectation
 	mockGenerator.On("Generate", mock.Anything, mock.Anything, "conventional").Return("feat: test commit message", nil)
-
-	// Replace the actual generator with the mock
-	hook.Generator = mockGenerator
 
 	// Run the hook
 	err = hook.Run(tmpfile.Name(), "", "")
@@ -68,8 +71,9 @@ func TestLLMHook_Run(t *testing.T) {
 }
 
 func TestLLMHook_Run_DryRun(t *testing.T) {
+	mockGenerator := new(MockCommitMessageGenerator)
 	hook := &LLMHook{
-		Generator: &commit.CommitMessageGenerator{},
+		Generator: mockGenerator,
 		Config: &config.Config{
 			HookConfig: config.HookConfig{
 				CommitStyle: "conventional",
@@ -79,9 +83,7 @@ func TestLLMHook_Run_DryRun(t *testing.T) {
 		},
 	}
 
-	mockGenerator := new(MockCommitMessageGenerator)
 	mockGenerator.On("Generate", mock.Anything, mock.Anything, "conventional").Return("feat: test commit message", nil)
-	hook.Generator = mockGenerator
 
 	err := hook.Run("dummy-file", "", "")
 
