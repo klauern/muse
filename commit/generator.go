@@ -2,7 +2,9 @@ package commit
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
+	"time"
 
 	"github.com/klauern/pre-commit-llm/config"
 	"github.com/klauern/pre-commit-llm/llm"
@@ -37,10 +39,25 @@ func (g *CommitMessageGenerator) Generate(ctx context.Context, diff string, comm
 	}
 
 	style := llm.GetCommitStyleFromString(commitStyle)
-	message, err := g.LLMService.GenerateCommitMessage(ctx, diff, context, style)
-	if err != nil {
-		return "", fmt.Errorf("failed to generate commit message: %w", err)
+
+	maxRetries := 3
+	for i := 0; i < maxRetries; i++ {
+		message, err := g.LLMService.GenerateCommitMessage(ctx, diff, context, style)
+		if err == nil {
+			// Attempt to parse the JSON to ensure it's valid
+			var parsedMessage map[string]interface{}
+			if json.Unmarshal([]byte(message), &parsedMessage) == nil {
+				return message, nil
+			}
+		}
+		
+		if i == maxRetries-1 {
+			return "", fmt.Errorf("failed to generate valid commit message after %d attempts: %w", maxRetries, err)
+		}
+		
+		// Wait for a short duration before retrying
+		time.Sleep(time.Second * time.Duration(i+1))
 	}
 
-	return message, nil
+	return "", fmt.Errorf("unexpected error: should not reach this point")
 }
