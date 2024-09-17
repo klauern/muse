@@ -158,7 +158,7 @@ func (s *AnthropicService) GenerateCommitMessage(ctx context.Context, diff, cont
 	// Combine the partial completion with the response to get the full JSON
 	fullJSON := partialCompletion + response.Content[0].Text
 
-	// Parse the JSON into a CommitMessage struct
+	// Attempt to parse the JSON into a CommitMessage struct
 	var commitMessage struct {
 		Type    string      `json:"type"`
 		Scope   string      `json:"scope"`
@@ -167,25 +167,31 @@ func (s *AnthropicService) GenerateCommitMessage(ctx context.Context, diff, cont
 	}
 	err = json.Unmarshal([]byte(fullJSON), &commitMessage)
 	if err != nil {
-		return "", fmt.Errorf("failed to parse commit message JSON: %w", err)
+		// If parsing fails, return the raw response for debugging
+		return "", fmt.Errorf("failed to parse commit message JSON: %w\nRaw response: %s", err, fullJSON)
 	}
 
 	// Format the commit message
-	formattedMessage := fmt.Sprintf("%s(%s): %s\n\n", commitMessage.Type, commitMessage.Scope, commitMessage.Subject)
+	var formattedMessage strings.Builder
+	formattedMessage.WriteString(fmt.Sprintf("%s", commitMessage.Type))
+	if commitMessage.Scope != "" {
+		formattedMessage.WriteString(fmt.Sprintf("(%s)", commitMessage.Scope))
+	}
+	formattedMessage.WriteString(fmt.Sprintf(": %s\n\n", commitMessage.Subject))
 
 	// Handle body based on its type
 	switch body := commitMessage.Body.(type) {
 	case string:
-		formattedMessage += fmt.Sprintf("- %s\n", body)
+		formattedMessage.WriteString(fmt.Sprintf("%s\n", body))
 	case []interface{}:
 		for _, line := range body {
 			if str, ok := line.(string); ok {
-				formattedMessage += fmt.Sprintf("- %s\n", str)
+				formattedMessage.WriteString(fmt.Sprintf("%s\n", str))
 			}
 		}
 	}
 
-	return strings.TrimSpace(formattedMessage), nil
+	return strings.TrimSpace(formattedMessage.String()), nil
 }
 
 // The extractCommitMessage function is no longer needed as we're parsing JSON directly
