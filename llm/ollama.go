@@ -9,9 +9,12 @@ import (
 
 type OllamaProvider struct{}
 
-func (p *OllamaProvider) NewService(config *config.LLMConfig) (LLMService, error) {
+func (p *OllamaProvider) NewService(config *LLMConfig[OllamaConfig]) (LLMService, error) {
+	if config.Config.Model == "" {
+		return nil, fmt.Errorf("Ollama model not specified in config")
+	}
 	// TODO: Implement Ollama client initialization
-	return nil, fmt.Errorf("Ollama provider not implemented")
+	return &OllamaService{model: config.Config.Model}, nil
 }
 
 type OllamaService struct {

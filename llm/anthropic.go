@@ -20,15 +20,15 @@ const (
 
 type AnthropicProvider struct{}
 
-func (p *AnthropicProvider) NewService(config *config.LLMConfig) (LLMService, error) {
-	apiKey, ok := config.Extra["api_key"].(string)
-	if !ok || apiKey == "" {
+func (p *AnthropicProvider) NewService(config *LLMConfig[AnthropicConfig]) (LLMService, error) {
+	apiKey := config.Config.APIKey
+	if apiKey == "" {
 		apiKey = os.Getenv("ANTHROPIC_API_KEY")
 		if apiKey == "" {
 			return nil, fmt.Errorf("Anthropic API key not found in config or environment. Please set ANTHROPIC_API_KEY environment variable or provide it in the config")
 		}
 	}
-	model := config.Model
+	model := config.Config.Model
 	if model == "" {
 		model = "claude-3-sonnet-20240229" // Default model if not specified
 	}
