@@ -74,12 +74,19 @@ func NewAnthropicService(apiKey, model string) *AnthropicService {
 }
 
 func (s *AnthropicService) GenerateCommitMessage(ctx context.Context, diff, context string, style CommitStyle) (string, error) {
+	template := GetCommitTemplate(style)
+	systemPrompt := fmt.Sprintf("You are a Git commit message generator. Create a concise commit message based on the provided diff, following this format:\n%s\nComplete the JSON structure below, filling in appropriate values for each field.", template.Lookup("Format").Root.String())
+
+	partialCompletion := `{
+  "type": "`
+
 	req := Request{
 		Model:     s.model,
-		MaxTokens: 300, // Reduced to encourage more concise responses
-		System:    "You are a Git commit message generator. Create a concise, conventional commit message based on the provided diff. The message should have a brief subject line (type(scope): description) followed by a short bullet list of key changes. Exclude file names, line numbers, and diff syntax. Focus only on the most important changes. Respond in JSON format.",
+		MaxTokens: 300,
+		System:    systemPrompt,
 		Messages: []Message{
-			{Role: "user", Content: fmt.Sprintf("Generate a commit message for this diff in JSON format:\n\n%s", diff)},
+			{Role: "user", Content: fmt.Sprintf("Generate a commit message for this diff:\n\n%s\n\nAdditional context:\n%s", diff, context)},
+			{Role: "assistant", Content: partialCompletion},
 		},
 	}
 
@@ -88,7 +95,7 @@ func (s *AnthropicService) GenerateCommitMessage(ctx context.Context, diff, cont
 		return "", err
 	}
 
-	httpReq, err := http.NewRequestWithContext(ctx, "POST", apiURL, strings.NewReader(string(reqBody)))
+	httpReq, err := http.NewRequestWithContext(ctx, "POST", apiURL, bytes.NewReader(reqBody))
 	if err != nil {
 		return "", err
 	}
@@ -115,13 +122,16 @@ func (s *AnthropicService) GenerateCommitMessage(ctx context.Context, diff, cont
 		return "", err
 	}
 
-	if len(response.Content) == 0 {
-		return "", fmt.Errorf("empty response from API")
+	if len(response.Content) == 0 || response.Content[0].Type != "text" {
+		return "", fmt.Errorf("unexpected response format from API")
 	}
 
-	// Extract the JSON commit message from the response
+	// Combine the partial completion with the response to get the full JSON
+	fullJSON := partialCompletion + response.Content[0].Text
+
+	// Parse the JSON into a CommitMessage struct
 	var commitMessage CommitMessage
-	err = json.Unmarshal([]byte(response.Content[0].Text), &commitMessage)
+	err = json.Unmarshal([]byte(fullJSON), &commitMessage)
 	if err != nil {
 		return "", fmt.Errorf("failed to parse commit message JSON: %w", err)
 	}
