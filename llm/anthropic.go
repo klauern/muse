@@ -28,7 +28,7 @@ func (p *AnthropicProvider) NewService(config map[string]interface{}) (LLMServic
 	}
 	model, _ := config["model"].(string)
 	if model == "" {
-		model = "claude-3-sonnet-20240229" // Default model if not specified
+		model = "claude-3-5-sonnet-20240620" // Default model if not specified
 	}
 	return NewAnthropicService(apiKey, model), nil
 }
