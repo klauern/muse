@@ -192,27 +192,32 @@ func formatCommitMessage(response *Response) (string, error) {
 	err := json.Unmarshal([]byte(fullJSON), &commitMessage)
 	if err != nil {
 		// If parsing fails, try to extract the relevant information
-		type_, subject, body := extractCommitInfo(fullJSON)
-		if type_ == "" || subject == "" {
+		type_, scope, subject, body := extractCommitInfo(fullJSON)
+		if type_ == "" && subject == "" {
 			return "", fmt.Errorf("failed to parse commit message JSON: %w\nRaw response: %s", err, fullJSON)
 		}
 		commitMessage = CommitMessage{
 			Type:    type_,
+			Scope:   scope,
 			Subject: subject,
 			Body:    body,
 		}
 	}
 
 	var formattedMessage strings.Builder
-	formattedMessage.WriteString(commitMessage.Type)
-	if commitMessage.Scope != "" {
-		formattedMessage.WriteString(fmt.Sprintf("(%s)", commitMessage.Scope))
+	if commitMessage.Type != "" {
+		formattedMessage.WriteString(commitMessage.Type)
+		if commitMessage.Scope != "" {
+			formattedMessage.WriteString(fmt.Sprintf("(%s)", commitMessage.Scope))
+		}
+		formattedMessage.WriteString(": ")
 	}
-	formattedMessage.WriteString(fmt.Sprintf(": %s\n\n", commitMessage.Subject))
+	formattedMessage.WriteString(commitMessage.Subject)
+	formattedMessage.WriteString("\n\n")
 
 	switch body := commitMessage.Body.(type) {
 	case string:
-		formattedMessage.WriteString(body + "\n")
+		formattedMessage.WriteString(body)
 	case []interface{}:
 		for _, line := range body {
 			if str, ok := line.(string); ok {
@@ -224,10 +229,18 @@ func formatCommitMessage(response *Response) (string, error) {
 	return strings.TrimSpace(formattedMessage.String()), nil
 }
 
-func extractCommitInfo(jsonStr string) (type_ string, subject string, body string) {
-	typeMatch := regexp.MustCompile(`"type":\s*"([^"]+)"`).FindStringSubmatch(jsonStr)
-	if len(typeMatch) > 1 {
-		type_ = typeMatch[1]
+func extractCommitInfo(jsonStr string) (type_ string, scope string, subject string, body string) {
+	// If the string starts with a quote, it's likely the type
+	if strings.HasPrefix(jsonStr, `"`) {
+		parts := strings.SplitN(jsonStr, `"`, 3)
+		if len(parts) > 1 {
+			type_ = parts[1]
+		}
+	}
+
+	scopeMatch := regexp.MustCompile(`"scope":\s*"([^"]+)"`).FindStringSubmatch(jsonStr)
+	if len(scopeMatch) > 1 {
+		scope = scopeMatch[1]
 	}
 
 	subjectMatch := regexp.MustCompile(`"subject":\s*"([^"]+)"`).FindStringSubmatch(jsonStr)
