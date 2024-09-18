@@ -3,9 +3,11 @@ package llm
 import (
 	"bytes"
 	"context"
+	"encoding/json"
 	"fmt"
 
 	"github.com/sashabaranov/go-openai"
+	"github.com/sashabaranov/go-openai/jsonschema"
 )
 
 type OpenAIProvider struct{}
@@ -34,9 +36,11 @@ func (s *OpenAIService) GenerateCommitMessage(ctx context.Context, diff, context
 	err := template.Execute(&promptBuffer, struct {
 		Diff    string
 		Context string
+		Schema  jsonschema.Definition
 	}{
 		Diff:    diff,
 		Context: context,
+		Schema:  commitMessageSchema,
 	})
 	if err != nil {
 		return "", fmt.Errorf("failed to execute template: %w", err)
@@ -52,6 +56,14 @@ func (s *OpenAIService) GenerateCommitMessage(ctx context.Context, diff, context
 					Content: promptBuffer.String(),
 				},
 			},
+			ResponseFormat: &openai.ChatCompletionResponseFormat{
+				Type: openai.ChatCompletionResponseFormatTypeJSONObject,
+				Schema: &openai.JSONSchema{
+					Type:       "object",
+					Properties: commitMessageSchema.Properties,
+					Required:   commitMessageSchema.Required,
+				},
+			},
 		},
 	)
 
@@ -63,7 +75,48 @@ func (s *OpenAIService) GenerateCommitMessage(ctx context.Context, diff, context
 		return "", fmt.Errorf("no response choices returned from OpenAI")
 	}
 
-	return resp.Choices[0].Message.Content, nil
+	// Parse the JSON response
+	var commitMessage struct {
+		Type    string `json:"type"`
+		Scope   string `json:"scope"`
+		Subject string `json:"subject"`
+		Body    string `json:"body"`
+	}
+	if err := json.Unmarshal([]byte(resp.Choices[0].Message.Content), &commitMessage); err != nil {
+		return "", fmt.Errorf("failed to parse commit message: %w", err)
+	}
+
+	// Format the commit message
+	formattedMessage := fmt.Sprintf("%s", commitMessage.Type)
+	if commitMessage.Scope != "" {
+		formattedMessage += fmt.Sprintf("(%s)", commitMessage.Scope)
+	}
+	formattedMessage += fmt.Sprintf(": %s", commitMessage.Subject)
+	if commitMessage.Body != "" {
+		formattedMessage += fmt.Sprintf("\n\n%s", commitMessage.Body)
+	}
+
+	return formattedMessage, nil
+}
+
+var commitMessageSchema = jsonschema.Definition{
+	Type: jsonschema.Object,
+	Properties: map[string]jsonschema.Definition{
+		"type": {
+			Type: jsonschema.String,
+			Enum: []string{"feat", "fix", "docs", "style", "refactor", "test", "chore"},
+		},
+		"scope": {
+			Type: jsonschema.String,
+		},
+		"subject": {
+			Type: jsonschema.String,
+		},
+		"body": {
+			Type: jsonschema.String,
+		},
+	},
+	Required: []string{"type", "subject"},
 }
 
 func init() {
