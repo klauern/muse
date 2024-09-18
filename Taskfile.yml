@@ -4,7 +4,7 @@ tasks:
   build:
     desc: "Build the Go binary"
     cmds:
-      - go build -o bin/mybinary ./cmd/...
+      - go build -o dist/muse ./cmd/muse
 
   test:
     desc: "Run all Go tests (unit and integration)"
