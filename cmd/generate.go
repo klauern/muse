@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"os/exec"
 
-	"github.com/klauern/pre-commit-llm/commit"
 	"github.com/klauern/pre-commit-llm/config"
 	"github.com/klauern/pre-commit-llm/llm"
 	"github.com/klauern/pre-commit-llm/rag"
