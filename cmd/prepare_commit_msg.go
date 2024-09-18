@@ -5,8 +5,8 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/klauern/pre-commit-llm/hooks"
 	"github.com/klauern/pre-commit-llm/config"
+	"github.com/klauern/pre-commit-llm/hooks"
 	"github.com/klauern/pre-commit-llm/llm"
 	"github.com/klauern/pre-commit-llm/rag"
 	"github.com/urfave/cli/v2"

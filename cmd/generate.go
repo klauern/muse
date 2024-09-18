@@ -51,9 +51,9 @@ func generateCommitMessage(c *cli.Context, cfg *config.Config) error {
 	ragService := &rag.GitRAGService{}
 
 	// Create commit message generator
-	generator := &commit.CommitMessageGenerator{
-		LLMService: llmService,
-		RAGService: ragService,
+	generator, err := llm.NewCommitMessageGenerator(cfg, ragService)
+	if err != nil {
+		return fmt.Errorf("failed to create commit message generator: %w", err)
 	}
 
 	// Get the git diff
