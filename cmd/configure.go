@@ -70,7 +70,7 @@ func generateTemplateConfig() error {
 	configPath := filepath.Join(configDir, "muse", "muse.yaml")
 
 	// Create the directory if it doesn't exist
-	if err := os.MkdirAll(filepath.Dir(configPath), 0755); err != nil {
+	if err := os.MkdirAll(filepath.Dir(configPath), 0o755); err != nil {
 		return fmt.Errorf("failed to create config directory: %w", err)
 	}
 
@@ -78,7 +78,7 @@ func generateTemplateConfig() error {
 		return fmt.Errorf("configuration file already exists at %s", configPath)
 	}
 
-	if err := os.WriteFile(configPath, exampleConfig, 0644); err != nil {
+	if err := os.WriteFile(configPath, exampleConfig, 0o644); err != nil {
 		return fmt.Errorf("failed to write template config: %w", err)
 	}
 

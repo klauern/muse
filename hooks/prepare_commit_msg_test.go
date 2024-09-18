@@ -5,8 +5,8 @@ import (
 	"os"
 	"testing"
 
-	"github.com/klauern/pre-commit-llm/llm"
 	"github.com/klauern/pre-commit-llm/config"
+	"github.com/klauern/pre-commit-llm/llm"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 )

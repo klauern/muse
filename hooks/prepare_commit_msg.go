@@ -60,7 +60,7 @@ func (h *LLMHook) Run(commitMsgFile string, commitSource string, sha1 string) er
 	}
 
 	// Write the generated message to the commit message file
-	if err := os.WriteFile(commitMsgFile, []byte(message), 0644); err != nil {
+	if err := os.WriteFile(commitMsgFile, []byte(message), 0o644); err != nil {
 		return fmt.Errorf("failed to write commit message: %w", err)
 	}
 

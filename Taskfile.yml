@@ -32,10 +32,16 @@ tasks:
     cmds:
       - go test ./llm -v -tags=integration -run TestOpenAIService
 
-  format:
-    desc: "Format Go code"
+  deps:
+    desc: "Ensure gofumpt is installed"
     cmds:
-      - go fmt ./...
+      - go install mvdan.cc/gofumpt@latest
+      - go get ./...
+
+  format:
+    desc: "Format Go code using gofumpt"
+    cmds:
+      - gofumpt -w .
 
   hooks:
     desc: "Run hooks defined in lefthook.yml"
