@@ -103,12 +103,19 @@ var commitMessageSchema = jsonschema.Definition{
 		},
 		"scope": {
 			Type: jsonschema.String,
+			Description: "optional and represents the module affected",
 		},
 		"subject": {
 			Type: jsonschema.String,
+			Description: "a short description",
 		},
 		"body": {
 			Type: jsonschema.String,
+			Description: "provides additional context (optional)",
+		},
+		"footer": {
+			Type: jsonschema.String,
+			Description: "mentions any breaking changes or closed issues (optional)",
 		},
 	},
 	Required: []string{"type", "subject"},
