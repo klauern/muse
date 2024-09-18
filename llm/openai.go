@@ -8,6 +8,7 @@ import (
 
 	"github.com/sashabaranov/go-openai"
 	"github.com/klauern/pre-commit-llm/templates"
+	"github.com/sashabaranov/go-openai/jsonschema"
 )
 
 type OpenAIProvider struct{}
@@ -33,14 +34,14 @@ type OpenAIService struct {
 func (s *OpenAIService) GenerateCommitMessage(ctx context.Context, diff, context string, style CommitStyle) (string, error) {
 	commitTemplate := GetCommitTemplate(style)
 	var promptBuffer bytes.Buffer
-	err := commitTemplate.Template.Execute(&promptBuffer, struct {
+	err := commitTemplate.Execute(&promptBuffer, struct {
 		Diff    string
 		Context string
-		Schema  string
+		Schema  jsonschema.Definition
 	}{
 		Diff:    diff,
 		Context: context,
-		Schema:  commitTemplate.Schema.String(),
+		Schema:  commitTemplate.Schema,
 	})
 	if err != nil {
 		return "", fmt.Errorf("failed to execute template: %w", err)

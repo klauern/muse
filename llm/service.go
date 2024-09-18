@@ -57,7 +57,7 @@ func NewLLMService(cfg *config.LLMConfig) (LLMService, error) {
 }
 
 // GetCommitTemplate returns the appropriate template based on the commit style
-func GetCommitTemplate(style CommitStyle) *template.Template {
+func GetCommitTemplate(style CommitStyle) templates.CommitTemplate {
 	switch style {
 	case ConventionalStyle:
 		return templates.ConventionalCommitTemplate
