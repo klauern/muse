@@ -58,11 +58,6 @@ func (s *OpenAIService) GenerateCommitMessage(ctx context.Context, diff, context
 			},
 			ResponseFormat: &openai.ChatCompletionResponseFormat{
 				Type: openai.ChatCompletionResponseFormatTypeJSONObject,
-				Schema: &openai.JSONSchema{
-					Type:       "object",
-					Properties: commitMessageSchema.Properties,
-					Required:   commitMessageSchema.Required,
-				},
 			},
 		},
 	)
