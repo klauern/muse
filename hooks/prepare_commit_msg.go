@@ -16,7 +16,7 @@ type PrepareCommitMsgHook interface {
 }
 
 type LLMHook struct {
-	Generator commit.Generator
+	Generator llm.Generator
 	Config    *config.Config
 }
 
@@ -87,9 +87,9 @@ func NewHook(cfg *config.Config) (PrepareCommitMsgHook, error) {
 		}
 
 		ragService := &rag.GitRAGService{}
-		generator := &commit.CommitMessageGenerator{
-			LLMService: llmService,
-			RAGService: ragService,
+		generator, err := llm.NewCommitMessageGenerator(cfg, ragService)
+		if err != nil {
+			return nil, fmt.Errorf("failed to create commit message generator: %w", err)
 		}
 		return &LLMHook{Generator: generator, Config: cfg}, nil
 	}
