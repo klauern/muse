@@ -7,7 +7,7 @@ import (
 	"fmt"
 
 	"github.com/sashabaranov/go-openai"
-	"github.com/sashabaranov/go-openai/jsonschema"
+	"github.com/your-project/templates"
 )
 
 type OpenAIProvider struct{}
@@ -31,16 +31,16 @@ type OpenAIService struct {
 }
 
 func (s *OpenAIService) GenerateCommitMessage(ctx context.Context, diff, context string, style CommitStyle) (string, error) {
-	template := GetCommitTemplate(style)
+	commitTemplate := GetCommitTemplate(style)
 	var promptBuffer bytes.Buffer
-	err := template.Execute(&promptBuffer, struct {
+	err := commitTemplate.Template.Execute(&promptBuffer, struct {
 		Diff    string
 		Context string
-		Schema  jsonschema.Definition
+		Schema  string
 	}{
 		Diff:    diff,
 		Context: context,
-		Schema:  commitMessageSchema,
+		Schema:  commitTemplate.Schema.String(),
 	})
 	if err != nil {
 		return "", fmt.Errorf("failed to execute template: %w", err)
@@ -76,13 +76,19 @@ func (s *OpenAIService) GenerateCommitMessage(ctx context.Context, diff, context
 		Scope   string `json:"scope"`
 		Subject string `json:"subject"`
 		Body    string `json:"body"`
+		Gitmoji string `json:"gitmoji,omitempty"`
 	}
 	if err := json.Unmarshal([]byte(resp.Choices[0].Message.Content), &commitMessage); err != nil {
 		return "", fmt.Errorf("failed to parse commit message: %w", err)
 	}
 
 	// Format the commit message
-	formattedMessage := fmt.Sprintf("%s", commitMessage.Type)
+	var formattedMessage string
+	if style == GitmojisStyle {
+		formattedMessage = fmt.Sprintf("%s %s", commitMessage.Gitmoji, commitMessage.Type)
+	} else {
+		formattedMessage = commitMessage.Type
+	}
 	if commitMessage.Scope != "" {
 		formattedMessage += fmt.Sprintf("(%s)", commitMessage.Scope)
 	}
@@ -92,33 +98,6 @@ func (s *OpenAIService) GenerateCommitMessage(ctx context.Context, diff, context
 	}
 
 	return formattedMessage, nil
-}
-
-var commitMessageSchema = jsonschema.Definition{
-	Type: jsonschema.Object,
-	Properties: map[string]jsonschema.Definition{
-		"type": {
-			Type: jsonschema.String,
-			Enum: []string{"feat", "fix", "docs", "style", "refactor", "test", "chore"},
-		},
-		"scope": {
-			Type: jsonschema.String,
-			Description: "optional and represents the module affected",
-		},
-		"subject": {
-			Type: jsonschema.String,
-			Description: "a short description",
-		},
-		"body": {
-			Type: jsonschema.String,
-			Description: "provides additional context (optional)",
-		},
-		"footer": {
-			Type: jsonschema.String,
-			Description: "mentions any breaking changes or closed issues (optional)",
-		},
-	},
-	Required: []string{"type", "subject"},
 }
 
 func init() {
