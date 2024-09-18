@@ -193,9 +193,6 @@ func formatCommitMessage(response *Response) (string, error) {
 	if err != nil {
 		// If parsing fails, try to extract the relevant information
 		type_, scope, subject, body := extractCommitInfo(fullJSON)
-		if type_ == "" && subject == "" {
-			return "", fmt.Errorf("failed to parse commit message JSON: %w\nRaw response: %s", err, fullJSON)
-		}
 		commitMessage = CommitMessage{
 			Type:    type_,
 			Scope:   scope,
@@ -204,24 +201,32 @@ func formatCommitMessage(response *Response) (string, error) {
 		}
 	}
 
-	var formattedMessage strings.Builder
-	if commitMessage.Type != "" {
-		formattedMessage.WriteString(commitMessage.Type)
-		if commitMessage.Scope != "" {
-			formattedMessage.WriteString(fmt.Sprintf("(%s)", commitMessage.Scope))
-		}
-		formattedMessage.WriteString(": ")
+	// Ensure we have at least a type and subject
+	if commitMessage.Type == "" {
+		commitMessage.Type = "feat" // Default to "feat" if no type is provided
 	}
-	formattedMessage.WriteString(commitMessage.Subject)
-	formattedMessage.WriteString("\n\n")
+	if commitMessage.Subject == "" {
+		commitMessage.Subject = strings.SplitN(fullJSON, "\n", 2)[0] // Use the first line as subject if not found
+	}
 
-	switch body := commitMessage.Body.(type) {
-	case string:
-		formattedMessage.WriteString(body)
-	case []interface{}:
-		for _, line := range body {
-			if str, ok := line.(string); ok {
-				formattedMessage.WriteString(str + "\n")
+	var formattedMessage strings.Builder
+	formattedMessage.WriteString(commitMessage.Type)
+	if commitMessage.Scope != "" {
+		formattedMessage.WriteString(fmt.Sprintf("(%s)", commitMessage.Scope))
+	}
+	formattedMessage.WriteString(": ")
+	formattedMessage.WriteString(commitMessage.Subject)
+
+	if commitMessage.Body != nil {
+		formattedMessage.WriteString("\n\n")
+		switch body := commitMessage.Body.(type) {
+		case string:
+			formattedMessage.WriteString(body)
+		case []interface{}:
+			for _, line := range body {
+				if str, ok := line.(string); ok {
+					formattedMessage.WriteString(str + "\n")
+				}
 			}
 		}
 	}
