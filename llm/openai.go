@@ -4,6 +4,8 @@ import (
 	"bytes"
 	"context"
 	"fmt"
+
+	"github.com/sashabaranov/go-openai"
 )
 
 type OpenAIProvider struct{}
@@ -17,11 +19,12 @@ func (p *OpenAIProvider) NewService(config map[string]interface{}) (LLMService, 
 	if !ok || model == "" {
 		return nil, fmt.Errorf("OpenAI model not found in config")
 	}
-	return &OpenAIService{apiKey: apiKey, model: model}, nil
+	client := openai.NewClient(apiKey)
+	return &OpenAIService{client: client, model: model}, nil
 }
 
 type OpenAIService struct {
-	apiKey string
+	client *openai.Client
 	model  string
 }
 
@@ -39,8 +42,28 @@ func (s *OpenAIService) GenerateCommitMessage(ctx context.Context, diff, context
 		return "", fmt.Errorf("failed to execute template: %w", err)
 	}
 
-	// TODO: Implement OpenAI API call using the generated prompt
-	return fmt.Sprintf("OpenAI generated commit message for diff: %s", diff), nil
+	resp, err := s.client.CreateChatCompletion(
+		ctx,
+		openai.ChatCompletionRequest{
+			Model: s.model,
+			Messages: []openai.ChatCompletionMessage{
+				{
+					Role:    openai.ChatMessageRoleUser,
+					Content: promptBuffer.String(),
+				},
+			},
+		},
+	)
+
+	if err != nil {
+		return "", fmt.Errorf("OpenAI API call failed: %w", err)
+	}
+
+	if len(resp.Choices) == 0 {
+		return "", fmt.Errorf("no response choices returned from OpenAI")
+	}
+
+	return resp.Choices[0].Message.Content, nil
 }
 
 func init() {
