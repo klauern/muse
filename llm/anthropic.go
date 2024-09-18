@@ -107,14 +107,20 @@ func createSystemPrompt(diff, context string, style CommitStyle) (string, error)
 		return "", fmt.Errorf("invalid commit style: %v", style)
 	}
 
+	schemaJSON, err := json.Marshal(template.Schema)
+	if err != nil {
+		return "", fmt.Errorf("failed to marshal schema: %w", err)
+	}
+
 	var formatBuffer bytes.Buffer
-	err := template.Template.Execute(&formatBuffer, struct {
+	err = template.Template.Execute(&formatBuffer, struct {
 		Type    string
 		Diff    string
 		Context string
 		Format  string
 		Details string
 		Extra   string
+		Schema  string
 	}{
 		Type:    template.Template.Name(),
 		Diff:    diff,
@@ -122,6 +128,7 @@ func createSystemPrompt(diff, context string, style CommitStyle) (string, error)
 		Format:  "{{.Format}}",
 		Details: "{{.Details}}",
 		Extra:   "{{.Extra}}",
+		Schema:  string(schemaJSON),
 	})
 	if err != nil {
 		return "", fmt.Errorf("failed to execute template: %w", err)
