@@ -8,6 +8,7 @@ import (
 	"io"
 	"net/http"
 	"os"
+	"regexp"
 	"strings"
 )
 
@@ -190,16 +191,15 @@ func formatCommitMessage(response *Response) (string, error) {
 	var commitMessage CommitMessage
 	err := json.Unmarshal([]byte(fullJSON), &commitMessage)
 	if err != nil {
-		// If parsing fails, try to complete the JSON
-		if !strings.HasPrefix(fullJSON, "{") {
-			fullJSON = "{" + fullJSON
-		}
-		if !strings.HasSuffix(fullJSON, "}") {
-			fullJSON += "}"
-		}
-		err = json.Unmarshal([]byte(fullJSON), &commitMessage)
-		if err != nil {
+		// If parsing fails, try to extract the relevant information
+		type_, subject, body := extractCommitInfo(fullJSON)
+		if type_ == "" || subject == "" {
 			return "", fmt.Errorf("failed to parse commit message JSON: %w\nRaw response: %s", err, fullJSON)
+		}
+		commitMessage = CommitMessage{
+			Type:    type_,
+			Subject: subject,
+			Body:    body,
 		}
 	}
 
@@ -222,6 +222,25 @@ func formatCommitMessage(response *Response) (string, error) {
 	}
 
 	return strings.TrimSpace(formattedMessage.String()), nil
+}
+
+func extractCommitInfo(jsonStr string) (type_ string, subject string, body string) {
+	typeMatch := regexp.MustCompile(`"type":\s*"([^"]+)"`).FindStringSubmatch(jsonStr)
+	if len(typeMatch) > 1 {
+		type_ = typeMatch[1]
+	}
+
+	subjectMatch := regexp.MustCompile(`"subject":\s*"([^"]+)"`).FindStringSubmatch(jsonStr)
+	if len(subjectMatch) > 1 {
+		subject = subjectMatch[1]
+	}
+
+	bodyMatch := regexp.MustCompile(`"body":\s*"([^"]+)"`).FindStringSubmatch(jsonStr)
+	if len(bodyMatch) > 1 {
+		body = bodyMatch[1]
+	}
+
+	return
 }
 
 func init() {
