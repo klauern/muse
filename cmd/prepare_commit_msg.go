@@ -12,14 +12,6 @@ import (
 	"github.com/urfave/cli/v2"
 )
 
-func getGitDiff() (string, error) {
-	cmd := exec.Command("git", "diff", "--cached")
-	output, err := cmd.Output()
-	if err != nil {
-		return "", err
-	}
-	return string(output), nil
-}
 
 func NewPrepareCommitMsgCmd(cfg *config.Config) *cli.Command {
 	return &cli.Command{

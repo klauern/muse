@@ -11,13 +11,14 @@ import (
 	"github.com/stretchr/testify/mock"
 )
 
-type LLMHook struct {
+// LLMHook is defined in another file, so we'll just declare a mock version for testing
+type MockLLMHook struct {
 	Generator llm.Generator
 	Config    *config.Config
 }
 
-func (h *LLMHook) Run(commitMsgFile, commitSource, commitSHA string) error {
-	// Implementation details...
+func (h *MockLLMHook) Run(commitMsgFile, commitSource, commitSHA string) error {
+	// Mock implementation for testing
 	return nil
 }
 
