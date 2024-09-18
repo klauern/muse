@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/klauern/pre-commit-llm/commit"
+	"github.com/klauern/pre-commit-llm/hooks"
 	"github.com/klauern/pre-commit-llm/config"
 	"github.com/klauern/pre-commit-llm/llm"
 	"github.com/klauern/pre-commit-llm/rag"
@@ -45,7 +45,7 @@ func runPrepareCommitMsg(c *cli.Context, cfg *config.Config) error {
 	ragService := &rag.GitRAGService{}
 
 	// Create commit message generator
-	generator := &commit.CommitMessageGenerator{
+	generator := &hooks.CommitMessageGenerator{
 		LLMService: llmService,
 		RAGService: ragService,
 	}
