@@ -7,7 +7,7 @@ import (
 	"fmt"
 
 	"github.com/sashabaranov/go-openai"
-	"github.com/your-project/templates"
+	"github.com/klauern/pre-commit-llm/templates"
 )
 
 type OpenAIProvider struct{}
