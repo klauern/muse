@@ -18,7 +18,7 @@ func NewConfigureCmd(config *config.Config) *cli.Command {
 			&cli.BoolFlag{
 				Name:  "enabled",
 				Usage: "Enable or disable the hook",
-				Value: config.HookConfig.Enabled,
+				Value: config.Hook.Enabled,
 			},
 			&cli.BoolFlag{
 				Name:  "template",

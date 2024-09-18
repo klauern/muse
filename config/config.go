@@ -8,8 +8,8 @@ import (
 )
 
 type Config struct {
-	Hook HookConfig `mapstructure:"hook"`
-	LLM  LLMConfig  `mapstructure:"llm"`
+	Hook Hook      `mapstructure:"hook"`
+	LLM  LLMConfig `mapstructure:"llm"`
 }
 
 type LLMConfig struct {
@@ -17,7 +17,7 @@ type LLMConfig struct {
 	Config   map[string]interface{} `mapstructure:"config"`
 }
 
-type HookConfig struct {
+type Hook struct {
 	Enabled     bool   `mapstructure:"enabled"`
 	Type        string `mapstructure:"type"`
 	CommitStyle string `mapstructure:"commit_style"`

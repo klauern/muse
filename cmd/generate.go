@@ -24,7 +24,7 @@ func NewGenerateCmd(cfg *config.Config) *cli.Command {
 			&cli.StringFlag{
 				Name:  "style",
 				Usage: "Commit message style (default, conventional, gitmojis)",
-				Value: cfg.HookConfig.CommitStyle,
+				Value: cfg.Hook.CommitStyle,
 			},
 		},
 		Action: func(c *cli.Context) error {
