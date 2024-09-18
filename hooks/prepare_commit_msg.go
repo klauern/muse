@@ -81,11 +81,6 @@ func getGitDiff() (string, error) {
 
 func NewHook(cfg *config.Config) (PrepareCommitMsgHook, error) {
 	if cfg.HookConfig.Enabled {
-		llmService, err := llm.NewLLMService(&cfg.LLM)
-		if err != nil {
-			return nil, fmt.Errorf("failed to create LLM service: %w", err)
-		}
-
 		ragService := &rag.GitRAGService{}
 		generator, err := llm.NewCommitMessageGenerator(cfg, ragService)
 		if err != nil {

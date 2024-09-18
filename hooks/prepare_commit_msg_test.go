@@ -5,7 +5,7 @@ import (
 	"os"
 	"testing"
 
-	"github.com/klauern/pre-commit-llm/commit"
+	"github.com/klauern/pre-commit-llm/llm"
 	"github.com/klauern/pre-commit-llm/config"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
@@ -21,8 +21,8 @@ func (m *MockCommitMessageGenerator) Generate(ctx context.Context, diff string, 
 	return args.String(0), args.Error(1)
 }
 
-// Ensure MockCommitMessageGenerator implements commit.Generator
-var _ commit.Generator = (*MockCommitMessageGenerator)(nil)
+// Ensure MockCommitMessageGenerator implements llm.Generator
+var _ llm.Generator = (*MockCommitMessageGenerator)(nil)
 
 func TestLLMHook_Run(t *testing.T) {
 	// Create a temporary file for the commit message
