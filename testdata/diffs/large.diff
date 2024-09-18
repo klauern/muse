@@ -1,0 +1,296 @@
+diff --git a/.gitignore b/.gitignore
+index b0ac3ed..3d9b7ca 100644
+--- a/.gitignore
++++ b/.gitignore
+@@ -1 +1,3 @@
+ .aider*
++
++dist/
+diff --git a/Taskfile.yml b/Taskfile.yml
+index 4fbd2f5..fac0598 100644
+--- a/Taskfile.yml
++++ b/Taskfile.yml
+@@ -32,10 +32,16 @@ tasks:
+     cmds:
+       - go test ./llm -v -tags=integration -run TestOpenAIService
+
++  deps:
++    desc: "Ensure gofumpt is installed"
++    cmds:
++      - go install mvdan.cc/gofumpt@latest
++      - go get ./...
++
+   format:
+-    desc: "Format Go code"
++    desc: "Format Go code using gofumpt"
+     cmds:
+-      - go fmt ./...
++      - gofumpt -w .
+
+   hooks:
+     desc: "Run hooks defined in lefthook.yml"
+diff --git a/cmd/configure.go b/cmd/configure.go
+index 5d7a2d1..6414495 100644
+--- a/cmd/configure.go
++++ b/cmd/configure.go
+@@ -70,7 +70,7 @@ func generateTemplateConfig() error {
+ 	configPath := filepath.Join(configDir, "muse", "muse.yaml")
+
+ 	// Create the directory if it doesn't exist
+-	if err := os.MkdirAll(filepath.Dir(configPath), 0755); err != nil {
++	if err := os.MkdirAll(filepath.Dir(configPath), 0o755); err != nil {
+ 		return fmt.Errorf("failed to create config directory: %w", err)
+ 	}
+
+@@ -78,7 +78,7 @@ func generateTemplateConfig() error {
+ 		return fmt.Errorf("configuration file already exists at %s", configPath)
+ 	}
+
+-	if err := os.WriteFile(configPath, exampleConfig, 0644); err != nil {
++	if err := os.WriteFile(configPath, exampleConfig, 0o644); err != nil {
+ 		return fmt.Errorf("failed to write template config: %w", err)
+ 	}
+
+diff --git a/config.go b/config.go
+deleted file mode 100644
+index 063fece..0000000
+--- a/config.go
++++ /dev/null
+@@ -1,13 +0,0 @@
+-package pre_commit_llm
+-
+-// ModelConfig represents common configuration options for language models
+-type ModelConfig struct {
+-	ModelName         string
+-	Temperature       float32
+-	MaxTokens         int
+-	TopP              float32
+-	FrequencyPenalty  float32
+-	PresencePenalty   float32
+-	StopSequences     []string
+-}
+-
+diff --git a/config/config.go b/config/config.go
+index ce0caa1..9cb97ac 100644
+--- a/config/config.go
++++ b/config/config.go
+@@ -27,6 +27,33 @@ type Hook struct {
+ 	Preview     bool   `mapstructure:"preview"`
+ }
+
++// ModelConfig represents common configuration options for language models
++type ModelConfig struct {
++	ModelName        string
++	Temperature      float32
++	MaxTokens        int
++	TopP             float32
++	FrequencyPenalty float32
++	PresencePenalty  float32
++	StopSequences    []string
++}
++
++type OpenAIConfig struct {
++	APIKey  string `env:"OPENAI_API_KEY"`
++	Model   string `env:"OPENAI_MODEL"`
++	APIBase string `env:"OPENAI_API_BASE",envDefault:"https://api.openai.com/v1"`
++}
++
++type AnthropicConfig struct {
++	APIKey string `env:"ANTHROPIC_API_KEY"`
++	Model  string `env:"ANTHROPIC_MODEL",envDefault:"claude-3-5-sonnet-20240620"`
++}
++
++type OllamaConfig struct {
++	Model  string `env:"OLLAMA_MODEL"`
++	APIUrl string `env:"OLLAMA_API_BASE",envDefault:"http://localhost:11434"`
++}
++
+ func LoadConfig() (*Config, error) {
+ 	v := viper.New()
+ 	v.SetConfigName("muse")
+diff --git a/go.mod b/go.mod
+index 073be41..4a14724 100644
+--- a/go.mod
++++ b/go.mod
+@@ -3,6 +3,7 @@ module github.com/klauern/pre-commit-llm
+ go 1.23.1
+
+ require (
++	github.com/caarlos0/env/v11 v11.2.2
+ 	github.com/mitchellh/mapstructure v1.5.0
+ 	github.com/spf13/viper v1.19.0
+ 	github.com/stretchr/testify v1.9.0
+diff --git a/go.sum b/go.sum
+index 8c9298a..d9a4067 100644
+--- a/go.sum
++++ b/go.sum
+@@ -1,3 +1,5 @@
++github.com/caarlos0/env/v11 v11.2.2 h1:95fApNrUyueipoZN/EhA8mMxiNxrBwDa+oAZrMWl3Kg=
++github.com/caarlos0/env/v11 v11.2.2/go.mod h1:JBfcdeQiBoI3Zh1QRAWfe+tpiNTmDtcCj/hHHHMx0vc=
+ github.com/cpuguy83/go-md2man/v2 v2.0.4 h1:wfIWP927BUkWJb2NmU/kNDYIBTh/ziUX91+lVfRxZq4=
+ github.com/cpuguy83/go-md2man/v2 v2.0.4/go.mod h1:tgQtvFlXSQOSOSIRvRPT7W67SCa46tRHOmNcaadrF8o=
+ github.com/davecgh/go-spew v1.1.1/go.mod h1:J7Y8YcW2NihsgmVo/mv3lAwl/skON4iLHjSsI+c5H38=
+diff --git a/hooks/prepare_commit_msg.go b/hooks/prepare_commit_msg.go
+index 194b513..f104b53 100644
+--- a/hooks/prepare_commit_msg.go
++++ b/hooks/prepare_commit_msg.go
+@@ -60,7 +60,7 @@ func (h *LLMHook) Run(commitMsgFile string, commitSource string, sha1 string) er
+ 	}
+
+ 	// Write the generated message to the commit message file
+-	if err := os.WriteFile(commitMsgFile, []byte(message), 0644); err != nil {
++	if err := os.WriteFile(commitMsgFile, []byte(message), 0o644); err != nil {
+ 		return fmt.Errorf("failed to write commit message: %w", err)
+ 	}
+
+diff --git a/hooks/prepare_commit_msg_test.go b/hooks/prepare_commit_msg_test.go
+index 861a7b1..d83bfc8 100644
+--- a/hooks/prepare_commit_msg_test.go
++++ b/hooks/prepare_commit_msg_test.go
+@@ -5,8 +5,8 @@ import (
+ 	"os"
+ 	"testing"
+
+-	"github.com/klauern/pre-commit-llm/llm"
+ 	"github.com/klauern/pre-commit-llm/config"
++	"github.com/klauern/pre-commit-llm/llm"
+ 	"github.com/stretchr/testify/assert"
+ 	"github.com/stretchr/testify/mock"
+ )
+diff --git a/llm/client.go b/llm/client.go
+deleted file mode 100644
+index 3078e75..0000000
+--- a/llm/client.go
++++ /dev/null
+@@ -1,27 +0,0 @@
+-package llm
+-
+-import (
+-	"context"
+-	"fmt"
+-
+-	"github.com/klauern/pre-commit-llm/config"
+-)
+-
+-type LLMClient struct {
+-	service LLMService
+-}
+-
+-func NewLLMClient(cfg *config.LLMConfig) (*LLMClient, error) {
+-	service, err := NewLLMService(cfg)
+-	if err != nil {
+-		return nil, fmt.Errorf("failed to create LLM service: %w", err)
+-	}
+-
+-	return &LLMClient{
+-		service: service,
+-	}, nil
+-}
+-
+-func (c *LLMClient) GenerateCommitMessage(ctx context.Context, diff, context string, style CommitStyle) (string, error) {
+-	return c.service.GenerateCommitMessage(ctx, diff, context, style)
+-}
+diff --git a/llm/config.go b/llm/config.go
+deleted file mode 100644
+index 35d0312..0000000
+--- a/llm/config.go
++++ /dev/null
+@@ -1,27 +0,0 @@
+-package llm
+-
+-// LLMConfig is a generic configuration structure for LLM providers
+-type LLMConfig[T any] struct {
+-	Provider string
+-	Config   T
+-}
+-
+-// OpenAIConfig holds configuration specific to OpenAI
+-type OpenAIConfig struct {
+-	APIKey string
+-	Model  string
+-	// Add other OpenAI-specific fields as needed
+-}
+-
+-// AnthropicConfig holds configuration specific to Anthropic
+-type AnthropicConfig struct {
+-	APIKey string
+-	Model  string
+-	// Add other Anthropic-specific fields as needed
+-}
+-
+-// OllamaConfig holds configuration specific to Ollama
+-type OllamaConfig struct {
+-	Model string
+-	// Add other Ollama-specific fields as needed
+-}
+diff --git a/commit/generator.go b/llm/generator.go
+similarity index 84%
+rename from commit/generator.go
+rename to llm/generator.go
+index 27fa94c..cb1589f 100644
+--- a/commit/generator.go
++++ b/llm/generator.go
+@@ -1,4 +1,4 @@
+-package commit
++package llm
+
+ import (
+ 	"context"
+@@ -7,7 +7,6 @@ import (
+ 	"time"
+
+ 	"github.com/klauern/pre-commit-llm/config"
+-	"github.com/klauern/pre-commit-llm/llm"
+ 	"github.com/klauern/pre-commit-llm/rag"
+ )
+
+@@ -16,12 +15,12 @@ type Generator interface {
+ }
+
+ type CommitMessageGenerator struct {
+-	LLMService llm.LLMService
++	LLMService LLMService
+ 	RAGService rag.RAGService
+ }
+
+ func NewCommitMessageGenerator(cfg *config.Config, ragService rag.RAGService) (*CommitMessageGenerator, error) {
+-	llmService, err := llm.NewLLMService(&cfg.LLM)
++	llmService, err := NewLLMService(&cfg.LLM)
+ 	if err != nil {
+ 		return nil, fmt.Errorf("failed to create LLM service: %w", err)
+ 	}
+@@ -38,7 +37,7 @@ func (g *CommitMessageGenerator) Generate(ctx context.Context, diff string, comm
+ 		return "", fmt.Errorf("failed to get relevant context: %w", err)
+ 	}
+
+-	style := llm.GetCommitStyleFromString(commitStyle)
++	style := GetCommitStyleFromString(commitStyle)
+
+ 	maxRetries := 3
+ 	for i := 0; i < maxRetries; i++ {
+@@ -53,19 +52,19 @@ func (g *CommitMessageGenerator) Generate(ctx context.Context, diff string, comm
+ 			}
+ 			if err := json.Unmarshal([]byte(message), &parsedMessage); err == nil {
+ 				// Format the commit message
+-				formattedMessage := fmt.Sprintf("%s(%s): %s\n\n%s",
+-					parsedMessage.Type,
+-					parsedMessage.Scope,
+-					parsedMessage.Subject,
++				formattedMessage := fmt.Sprintf("%s(%s): %s\n\n%s",
++					parsedMessage.Type,
++					parsedMessage.Scope,
++					parsedMessage.Subject,
+ 					parsedMessage.Body)
+ 				return formattedMessage, nil
+ 			}
+ 		}
+-
++
+ 		if i == maxRetries-1 {
+ 			return "", fmt.Errorf("failed to generate valid commit message after %d attempts: %w", maxRetries, err)
+ 		}
+-
++
+ 		// Wait for a short duration before retrying
+ 		time.Sleep(time.Second * time.Duration(i+1))
+ 	}
