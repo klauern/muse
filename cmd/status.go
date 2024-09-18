@@ -33,7 +33,7 @@ func checkStatus(config *config.Config) error {
 		fmt.Println("prepare-commit-msg hook is installed")
 	}
 
-	fmt.Printf("Hook configuration: Enabled=%v, Type=%s\n", config.HookConfig.Enabled, config.HookConfig.Type)
+	fmt.Printf("Hook configuration: Enabled=%v, Type=%s\n", config.Hook.Enabled, config.Hook.Type)
 
 	return nil
 }

@@ -45,7 +45,7 @@ func runPrepareCommitMsg(c *cli.Context, cfg *config.Config) error {
 
 	// Generate commit message
 	ctx := context.Background()
-	message, err := generator.Generate(ctx, diff, cfg.HookConfig.CommitStyle)
+	message, err := generator.Generate(ctx, diff, cfg.Hook.CommitStyle)
 	if err != nil {
 		return fmt.Errorf("failed to generate commit message: %w", err)
 	}

@@ -39,7 +39,7 @@ func TestLLMHook_Run(t *testing.T) {
 	hook := &LLMHook{
 		Generator: mockGenerator,
 		Config: &config.Config{
-			HookConfig: config.HookConfig{
+			Hook: config.Hook{
 				CommitStyle: "conventional",
 				DryRun:      false,
 				Preview:     false,
@@ -72,7 +72,7 @@ func TestLLMHook_Run_DryRun(t *testing.T) {
 	hook := &LLMHook{
 		Generator: mockGenerator,
 		Config: &config.Config{
-			HookConfig: config.HookConfig{
+			Hook: config.Hook{
 				CommitStyle: "conventional",
 				DryRun:      true,
 				Preview:     false,
