@@ -184,13 +184,23 @@ func sendRequest(ctx context.Context, apiKey string, req *Request) (*Response, e
 }
 
 func formatCommitMessage(response *Response) (string, error) {
-	partialCompletion := `{
-  "type": "`
-	fullJSON := partialCompletion + response.Content[0].Text
+	fullJSON := response.Content[0].Text
 
+	// Attempt to parse the JSON as is
 	var commitMessage CommitMessage
-	if err := json.Unmarshal([]byte(fullJSON), &commitMessage); err != nil {
-		return "", fmt.Errorf("failed to parse commit message JSON: %w\nRaw response: %s", err, fullJSON)
+	err := json.Unmarshal([]byte(fullJSON), &commitMessage)
+	if err != nil {
+		// If parsing fails, try to complete the JSON
+		if !strings.HasPrefix(fullJSON, "{") {
+			fullJSON = "{" + fullJSON
+		}
+		if !strings.HasSuffix(fullJSON, "}") {
+			fullJSON += "}"
+		}
+		err = json.Unmarshal([]byte(fullJSON), &commitMessage)
+		if err != nil {
+			return "", fmt.Errorf("failed to parse commit message JSON: %w\nRaw response: %s", err, fullJSON)
+		}
 	}
 
 	var formattedMessage strings.Builder
