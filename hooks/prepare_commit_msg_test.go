@@ -11,6 +11,16 @@ import (
 	"github.com/stretchr/testify/mock"
 )
 
+type LLMHook struct {
+	Generator llm.Generator
+	Config    *config.Config
+}
+
+func (h *LLMHook) Run(commitMsgFile, commitSource, commitSHA string) error {
+	// Implementation details...
+	return nil
+}
+
 // MockCommitMessageGenerator is a mock for the CommitMessageGenerator
 type MockCommitMessageGenerator struct {
 	mock.Mock

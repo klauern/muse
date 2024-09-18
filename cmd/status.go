@@ -9,6 +9,25 @@ import (
 	"github.com/urfave/cli/v2"
 )
 
+func findGitDir() (string, error) {
+	dir, err := os.Getwd()
+	if err != nil {
+		return "", err
+	}
+
+	for {
+		if _, err := os.Stat(filepath.Join(dir, ".git")); err == nil {
+			return filepath.Join(dir, ".git"), nil
+		}
+
+		parent := filepath.Dir(dir)
+		if parent == dir {
+			return "", fmt.Errorf("not a git repository (or any parent up to root)")
+		}
+		dir = parent
+	}
+}
+
 func NewStatusCmd(config *config.Config) *cli.Command {
 	return &cli.Command{
 		Name:  "status",
