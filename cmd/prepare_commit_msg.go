@@ -6,7 +6,6 @@ import (
 	"os"
 
 	"github.com/klauern/pre-commit-llm/config"
-	"github.com/klauern/pre-commit-llm/hooks"
 	"github.com/klauern/pre-commit-llm/llm"
 	"github.com/klauern/pre-commit-llm/rag"
 	"github.com/urfave/cli/v2"
@@ -33,12 +32,6 @@ func runPrepareCommitMsg(c *cli.Context, cfg *config.Config) error {
 	diff, err := getGitDiff()
 	if err != nil {
 		return fmt.Errorf("failed to get git diff: %w", err)
-	}
-
-	// Create LLM service
-	llmService, err := llm.NewLLMService(&cfg.LLM)
-	if err != nil {
-		return fmt.Errorf("failed to create LLM service: %w", err)
 	}
 
 	// Create RAG service
