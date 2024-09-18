@@ -16,7 +16,40 @@ const (
 	apiVersion = "2023-06-01"
 )
 
-type AnthropicProvider struct{}
+type (
+	AnthropicProvider struct{}
+
+	AnthropicService struct {
+		apiKey string
+		model  string
+	}
+
+	Message struct {
+		Role    string `json:"role"`
+		Content string `json:"content"`
+	}
+
+	Request struct {
+		Model     string    `json:"model"`
+		MaxTokens int       `json:"max_tokens"`
+		Messages  []Message `json:"messages"`
+		System    string    `json:"system"`
+	}
+
+	Response struct {
+		Content []struct {
+			Type string `json:"type"`
+			Text string `json:"text"`
+		} `json:"content"`
+	}
+
+	CommitMessage struct {
+		Type    string      `json:"type"`
+		Scope   string      `json:"scope"`
+		Subject string      `json:"subject"`
+		Body    interface{} `json:"body"`
+	}
+)
 
 func (p *AnthropicProvider) NewService(config map[string]interface{}) (LLMService, error) {
 	apiKey, _ := config["api_key"].(string)
@@ -31,37 +64,6 @@ func (p *AnthropicProvider) NewService(config map[string]interface{}) (LLMServic
 		model = "claude-3-5-sonnet-20240620" // Default model if not specified
 	}
 	return NewAnthropicService(apiKey, model), nil
-}
-
-type AnthropicService struct {
-	apiKey string
-	model  string
-}
-
-type Message struct {
-	Role    string `json:"role"`
-	Content string `json:"content"`
-}
-
-type Request struct {
-	Model     string    `json:"model"`
-	MaxTokens int       `json:"max_tokens"`
-	Messages  []Message `json:"messages"`
-	System    string    `json:"system"`
-}
-
-type Response struct {
-	Content []struct {
-		Type string `json:"type"`
-		Text string `json:"text"`
-	} `json:"content"`
-}
-
-type CommitMessage struct {
-	Type    string      `json:"type"`
-	Scope   string      `json:"scope"`
-	Subject string      `json:"subject"`
-	Body    interface{} `json:"body"`
 }
 
 func NewAnthropicService(apiKey, model string) *AnthropicService {
@@ -81,10 +83,7 @@ func (s *AnthropicService) GenerateCommitMessage(ctx context.Context, diff, cont
 		return "", err
 	}
 
-	req, err := createRequest(s.model, systemPrompt, diff, context)
-	if err != nil {
-		return "", err
-	}
+	req := createRequest(s.model, systemPrompt, diff, context)
 
 	response, err := sendRequest(ctx, s.apiKey, req)
 	if err != nil {
@@ -130,11 +129,11 @@ func createSystemPrompt(diff, context string, style CommitStyle) (string, error)
 	return fmt.Sprintf("You are a Git commit message generator. Create a concise commit message based on the provided diff, following this format:\n%s\nEnsure the subject line (first line) is no longer than 72 characters. Complete the JSON structure below, filling in appropriate values for each field.", formatBuffer.String()), nil
 }
 
-func createRequest(model, systemPrompt, diff, context string) (*Request, error) {
+func createRequest(model, systemPrompt, diff, context string) *Request {
 	partialCompletion := `{
   "type": "`
 
-	req := &Request{
+	return &Request{
 		Model:     model,
 		MaxTokens: 200,
 		System:    systemPrompt,
@@ -143,19 +142,17 @@ func createRequest(model, systemPrompt, diff, context string) (*Request, error) 
 			{Role: "assistant", Content: partialCompletion},
 		},
 	}
-
-	return req, nil
 }
 
 func sendRequest(ctx context.Context, apiKey string, req *Request) (*Response, error) {
 	reqBody, err := json.Marshal(req)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("failed to marshal request: %w", err)
 	}
 
 	httpReq, err := http.NewRequestWithContext(ctx, "POST", apiURL, bytes.NewReader(reqBody))
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("failed to create HTTP request: %w", err)
 	}
 
 	httpReq.Header.Set("x-api-key", apiKey)
@@ -165,7 +162,7 @@ func sendRequest(ctx context.Context, apiKey string, req *Request) (*Response, e
 	client := &http.Client{}
 	resp, err := client.Do(httpReq)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("failed to send request: %w", err)
 	}
 	defer resp.Body.Close()
 
@@ -175,9 +172,8 @@ func sendRequest(ctx context.Context, apiKey string, req *Request) (*Response, e
 	}
 
 	var response Response
-	err = json.NewDecoder(resp.Body).Decode(&response)
-	if err != nil {
-		return nil, err
+	if err := json.NewDecoder(resp.Body).Decode(&response); err != nil {
+		return nil, fmt.Errorf("failed to decode response: %w", err)
 	}
 
 	if len(response.Content) == 0 || response.Content[0].Type != "text" {
@@ -192,14 +188,8 @@ func formatCommitMessage(response *Response) (string, error) {
   "type": "`
 	fullJSON := partialCompletion + response.Content[0].Text
 
-	var commitMessage struct {
-		Type    string      `json:"type"`
-		Scope   string      `json:"scope"`
-		Subject string      `json:"subject"`
-		Body    interface{} `json:"body"`
-	}
-	err := json.Unmarshal([]byte(fullJSON), &commitMessage)
-	if err != nil {
+	var commitMessage CommitMessage
+	if err := json.Unmarshal([]byte(fullJSON), &commitMessage); err != nil {
 		return "", fmt.Errorf("failed to parse commit message JSON: %w\nRaw response: %s", err, fullJSON)
 	}
 
