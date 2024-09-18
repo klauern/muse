@@ -7,7 +7,6 @@ import (
 	"fmt"
 
 	"github.com/sashabaranov/go-openai"
-	"github.com/klauern/pre-commit-llm/templates"
 	"github.com/sashabaranov/go-openai/jsonschema"
 )
 
@@ -34,7 +33,7 @@ type OpenAIService struct {
 func (s *OpenAIService) GenerateCommitMessage(ctx context.Context, diff, context string, style CommitStyle) (string, error) {
 	commitTemplate := GetCommitTemplate(style)
 	var promptBuffer bytes.Buffer
-	err := commitTemplate.Execute(&promptBuffer, struct {
+	err := commitTemplate.Template.Execute(&promptBuffer, struct {
 		Diff    string
 		Context string
 		Schema  jsonschema.Definition

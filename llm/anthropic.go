@@ -103,12 +103,12 @@ func validateCommitStyle(style CommitStyle) error {
 
 func createSystemPrompt(diff, context string, style CommitStyle) (string, error) {
 	template := GetCommitTemplate(style)
-	if template == nil {
+	if template.Template == nil {
 		return "", fmt.Errorf("invalid commit style: %v", style)
 	}
 
 	var formatBuffer bytes.Buffer
-	err := template.Execute(&formatBuffer, struct {
+	err := template.Template.Execute(&formatBuffer, struct {
 		Type    string
 		Diff    string
 		Context string
@@ -116,7 +116,7 @@ func createSystemPrompt(diff, context string, style CommitStyle) (string, error)
 		Details string
 		Extra   string
 	}{
-		Type:    template.Name(),
+		Type:    template.Template.Name(),
 		Diff:    diff,
 		Context: context,
 		Format:  "{{.Format}}",
