@@ -41,12 +41,6 @@ func generateCommitMessage(c *cli.Context, cfg *config.Config) error {
 	llmConfig := cfg.LLM
 	llmConfig.Provider = provider
 
-	// Create LLM service
-	llmService, err := llm.NewLLMService(&llmConfig)
-	if err != nil {
-		return fmt.Errorf("failed to create LLM service: %w", err)
-	}
-
 	// Create RAG service
 	ragService := &rag.GitRAGService{}
 
