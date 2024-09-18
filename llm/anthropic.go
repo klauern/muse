@@ -72,13 +72,38 @@ func NewAnthropicService(apiKey, model string) *AnthropicService {
 }
 
 func (s *AnthropicService) GenerateCommitMessage(ctx context.Context, diff, context string, style CommitStyle) (string, error) {
-	template := GetCommitTemplate(style)
-	if template == nil {
-		return "", fmt.Errorf("invalid commit style: %v", style)
+	if err := validateCommitStyle(style); err != nil {
+		return "", err
 	}
 
-	// Early return if the style is invalid
+	systemPrompt, err := createSystemPrompt(diff, context, style)
+	if err != nil {
+		return "", err
+	}
+
+	req, err := createRequest(s.model, systemPrompt, diff, context)
+	if err != nil {
+		return "", err
+	}
+
+	response, err := sendRequest(ctx, s.apiKey, req)
+	if err != nil {
+		return "", err
+	}
+
+	return formatCommitMessage(response)
+}
+
+func validateCommitStyle(style CommitStyle) error {
 	if style < 0 || style.String() == "default" {
+		return fmt.Errorf("invalid commit style: %v", style)
+	}
+	return nil
+}
+
+func createSystemPrompt(diff, context string, style CommitStyle) (string, error) {
+	template := GetCommitTemplate(style)
+	if template == nil {
 		return "", fmt.Errorf("invalid commit style: %v", style)
 	}
 
@@ -102,13 +127,15 @@ func (s *AnthropicService) GenerateCommitMessage(ctx context.Context, diff, cont
 		return "", fmt.Errorf("failed to execute template: %w", err)
 	}
 
-	systemPrompt := fmt.Sprintf("You are a Git commit message generator. Create a concise commit message based on the provided diff, following this format:\n%s\nEnsure the subject line (first line) is no longer than 72 characters. Complete the JSON structure below, filling in appropriate values for each field.", formatBuffer.String())
+	return fmt.Sprintf("You are a Git commit message generator. Create a concise commit message based on the provided diff, following this format:\n%s\nEnsure the subject line (first line) is no longer than 72 characters. Complete the JSON structure below, filling in appropriate values for each field.", formatBuffer.String()), nil
+}
 
+func createRequest(model, systemPrompt, diff, context string) (*Request, error) {
 	partialCompletion := `{
   "type": "`
 
-	req := Request{
-		Model:     s.model,
+	req := &Request{
+		Model:     model,
 		MaxTokens: 200,
 		System:    systemPrompt,
 		Messages: []Message{
@@ -117,82 +144,85 @@ func (s *AnthropicService) GenerateCommitMessage(ctx context.Context, diff, cont
 		},
 	}
 
+	return req, nil
+}
+
+func sendRequest(ctx context.Context, apiKey string, req *Request) (*Response, error) {
 	reqBody, err := json.Marshal(req)
 	if err != nil {
-		return "", err
+		return nil, err
 	}
 
 	httpReq, err := http.NewRequestWithContext(ctx, "POST", apiURL, bytes.NewReader(reqBody))
 	if err != nil {
-		return "", err
+		return nil, err
 	}
 
-	httpReq.Header.Set("x-api-key", s.apiKey)
+	httpReq.Header.Set("x-api-key", apiKey)
 	httpReq.Header.Set("anthropic-version", apiVersion)
 	httpReq.Header.Set("content-type", "application/json")
 
 	client := &http.Client{}
 	resp, err := client.Do(httpReq)
 	if err != nil {
-		return "", err
+		return nil, err
 	}
 	defer resp.Body.Close()
 
 	if resp.StatusCode != http.StatusOK {
 		body, _ := io.ReadAll(resp.Body)
-		return "", fmt.Errorf("API request failed with status %d: %s", resp.StatusCode, string(body))
+		return nil, fmt.Errorf("API request failed with status %d: %s", resp.StatusCode, string(body))
 	}
 
 	var response Response
 	err = json.NewDecoder(resp.Body).Decode(&response)
 	if err != nil {
-		return "", err
+		return nil, err
 	}
 
 	if len(response.Content) == 0 || response.Content[0].Type != "text" {
-		return "", fmt.Errorf("unexpected response format from API")
+		return nil, fmt.Errorf("unexpected response format from API")
 	}
 
-	// Combine the partial completion with the response to get the full JSON
+	return &response, nil
+}
+
+func formatCommitMessage(response *Response) (string, error) {
+	partialCompletion := `{
+  "type": "`
 	fullJSON := partialCompletion + response.Content[0].Text
 
-	// Attempt to parse the JSON into a CommitMessage struct
 	var commitMessage struct {
 		Type    string      `json:"type"`
 		Scope   string      `json:"scope"`
 		Subject string      `json:"subject"`
 		Body    interface{} `json:"body"`
 	}
-	err = json.Unmarshal([]byte(fullJSON), &commitMessage)
+	err := json.Unmarshal([]byte(fullJSON), &commitMessage)
 	if err != nil {
-		// If parsing fails, return the raw response for debugging
 		return "", fmt.Errorf("failed to parse commit message JSON: %w\nRaw response: %s", err, fullJSON)
 	}
 
-	// Format the commit message
 	var formattedMessage strings.Builder
-	formattedMessage.WriteString(fmt.Sprintf("%s", commitMessage.Type))
+	formattedMessage.WriteString(commitMessage.Type)
 	if commitMessage.Scope != "" {
 		formattedMessage.WriteString(fmt.Sprintf("(%s)", commitMessage.Scope))
 	}
 	formattedMessage.WriteString(fmt.Sprintf(": %s\n\n", commitMessage.Subject))
 
-	// Handle body based on its type
 	switch body := commitMessage.Body.(type) {
 	case string:
-		formattedMessage.WriteString(fmt.Sprintf("%s\n", body))
+		formattedMessage.WriteString(body + "\n")
 	case []interface{}:
 		for _, line := range body {
 			if str, ok := line.(string); ok {
-				formattedMessage.WriteString(fmt.Sprintf("%s\n", str))
+				formattedMessage.WriteString(str + "\n")
 			}
 		}
 	}
 
 	return strings.TrimSpace(formattedMessage.String()), nil
 }
-
-// The extractCommitMessage function is no longer needed as we're parsing JSON directly
 
 func init() {
 	RegisterProvider("anthropic", &AnthropicProvider{})
