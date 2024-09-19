@@ -11,15 +11,15 @@ tasks:
       - task: set-version
       - echo "Building with commit {{.GIT_COMMIT}} and build date {{.BUILD_DATE}}"
       - >
-        go build -v -x -ldflags "-v
-        -X github.com/klauern/pre-commit-llm/cmd.CommitHash={{.GIT_COMMIT}}
-        -X github.com/klauern/pre-commit-llm/cmd.BuildDate={{.BUILD_DATE}}
-        " -o dist/muse ./cmd/muse
+        go build -v -x -ldflags "{{.LDFLAGS}}" -o dist/muse ./cmd/muse
     vars:
       GIT_COMMIT:
         sh: git rev-parse --short HEAD
       BUILD_DATE:
         sh: date -u '+%Y-%m-%d %H:%M:%S'
+      LDFLAGS: >-
+        -X github.com/klauern/pre-commit-llm/cmd.CommitHash={{.GIT_COMMIT}}
+        -X github.com/klauern/pre-commit-llm/cmd.BuildDate={{.BUILD_DATE}}
 
   set-version:
     internal: true
