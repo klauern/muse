@@ -7,7 +7,6 @@ import (
 
 	"github.com/klauern/pre-commit-llm/cmd"
 	"github.com/klauern/pre-commit-llm/config"
-	"github.com/klauern/pre-commit-llm/version"
 	"github.com/urfave/cli/v2"
 )
 
@@ -21,7 +20,7 @@ func main() {
 	app := &cli.App{
 		Name:    "muse",
 		Usage:   "A CLI utility for managing git hooks",
-		Version: version.Version,
+		Version: cmd.Version,
 		Commands: []*cli.Command{
 			cmd.NewStatusCmd(cfg),
 			cmd.NewInstallCmd(cfg),
@@ -34,7 +33,7 @@ func main() {
 				Name:  "version",
 				Usage: "Print the version",
 				Action: func(c *cli.Context) error {
-					fmt.Printf("muse version %s\n", version.Version)
+					fmt.Printf("muse version %s\n", cmd.Version)
 					return nil
 				},
 			},
