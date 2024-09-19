@@ -82,6 +82,48 @@ tasks:
       - go tool cover -html=coverage.out -o coverage.html
       - open coverage.html
 
+  test:cover:show:
+    desc: "Show coverage for each package"
+    cmds:
+      - go test ./... -coverprofile=coverage.out
+      - go tool cover -func=coverage.out
+
+  test:cmd:
+    desc: "Run tests for cmd package"
+    dir: cmd
+    cmds:
+      - go test -v -coverprofile=coverage.out
+
+  test:config:
+    desc: "Run tests for config package"
+    dir: config
+    cmds:
+      - go test -v -coverprofile=coverage.out
+
+  test:rag:
+    desc: "Run tests for rag package"
+    dir: rag
+    cmds:
+      - go test -v -coverprofile=coverage.out
+
+  test:templates:
+    desc: "Run tests for templates package"
+    dir: templates
+    cmds:
+      - go test -v -coverprofile=coverage.out
+
+  test:hooks:
+    desc: "Run tests for hooks package"
+    dir: hooks
+    cmds:
+      - go test -v -coverprofile=coverage.out
+
+  test:llm:
+    desc: "Run tests for llm package"
+    dir: llm
+    cmds:
+      - go test -v -coverprofile=coverage.out
+
   deps:
     desc: "Ensure gofumpt is installed"
     cmds:
