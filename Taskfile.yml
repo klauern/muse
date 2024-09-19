@@ -19,7 +19,7 @@ tasks:
         sh: date -u '+%Y-%m-%d %H:%M:%S'
       LDFLAGS: >-
         -X github.com/klauern/pre-commit-llm/cmd.CommitHash={{.GIT_COMMIT}}
-        -X github.com/klauern/pre-commit-llm/cmd.BuildDate={{.BUILD_DATE}}
+        -X github.com/klauern/pre-commit-llm/cmd.BuildDate={{quote .BUILD_DATE}}
 
   set-version:
     internal: true
