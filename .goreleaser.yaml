@@ -22,6 +22,10 @@ builds:
       - linux
       - darwin
     main: ./cmd/muse
+    ldflags:
+      - -X github.com/klauern/pre-commit-llm/cmd.Version={{.Version}}
+      - -X github.com/klauern/pre-commit-llm/cmd.CommitHash={{.ShortCommit}}
+      - -X github.com/klauern/pre-commit-llm/cmd.BuildDate={{.Date}}
 
 archives:
   - format: tar.gz
