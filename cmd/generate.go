@@ -4,9 +4,9 @@ import (
 	"fmt"
 	"os/exec"
 
-	"github.com/klauern/pre-commit-llm/config"
-	"github.com/klauern/pre-commit-llm/core"
-	"github.com/klauern/pre-commit-llm/rag"
+	"github.com/klauern/muse/config"
+	"github.com/klauern/muse/core"
+	"github.com/klauern/muse/rag"
 	"github.com/urfave/cli/v2"
 )
 

@@ -109,7 +109,7 @@ The response should be a valid JSON object matching this schema:
 		"gitmoji",
 		"<gitmoji> <type>[optional scope]: <subject>\n\n<body>\n\n<footer>",
 		`- <gitmoji> is an appropriate emoji for the change (e.g., 🐛 for bug fixes, ✨ for new features)
-- <type> is one of: feat, fix, docs, style, refactor, test, chore, etc.
+- <type> is one of: feat (✨), fix (🐛), docs (📝), style (💄), refactor (♻️), test (✅), chore (🔧)
 - <scope> is optional and represents the module affected
 - <subject> is a short description in the present tense
 - <body> provides additional context (optional)

@@ -6,8 +6,8 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/klauern/pre-commit-llm/config"
-	"github.com/klauern/pre-commit-llm/rag"
+	"github.com/klauern/muse/config"
+	"github.com/klauern/muse/rag"
 )
 
 type Generator interface {

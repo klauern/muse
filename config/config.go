@@ -55,8 +55,6 @@ func LoadConfig() (*Config, error) {
 }
 
 func setDefaults(v *viper.Viper) {
-	v.SetDefault("hook.enabled", false)
-	v.SetDefault("hook.type", "default")
 	v.SetDefault("hook.llm_provider", "anthropic")
 	v.SetDefault("hook.commit_style", "default")
 }

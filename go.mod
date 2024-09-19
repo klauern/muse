@@ -1,4 +1,4 @@
-module github.com/klauern/pre-commit-llm
+module github.com/klauern/muse
 
 go 1.23.1
 

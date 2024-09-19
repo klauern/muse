@@ -4,9 +4,9 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/klauern/pre-commit-llm/config"
-	"github.com/klauern/pre-commit-llm/llm"
-	"github.com/klauern/pre-commit-llm/rag"
+	"github.com/klauern/muse/config"
+	"github.com/klauern/muse/llm"
+	"github.com/klauern/muse/rag"
 )
 
 // CommitMessageGenerator struct

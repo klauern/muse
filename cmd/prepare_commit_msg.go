@@ -5,12 +5,11 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/klauern/pre-commit-llm/config"
-	"github.com/klauern/pre-commit-llm/llm"
-	"github.com/klauern/pre-commit-llm/rag"
+	"github.com/klauern/muse/config"
+	"github.com/klauern/muse/llm"
+	"github.com/klauern/muse/rag"
 	"github.com/urfave/cli/v2"
 )
-
 
 func NewPrepareCommitMsgCmd(cfg *config.Config) *cli.Command {
 	return &cli.Command{

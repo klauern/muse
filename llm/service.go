@@ -5,8 +5,8 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/klauern/pre-commit-llm/config"
-	"github.com/klauern/pre-commit-llm/templates"
+	"github.com/klauern/muse/config"
+	"github.com/klauern/muse/templates"
 )
 
 // CommitStyle represents different commit message styles

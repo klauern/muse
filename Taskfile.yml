@@ -9,17 +9,17 @@ tasks:
     desc: "Build the Go binary"
     cmds:
       - task: set-version
-      - echo "Building with commit {{.GIT_COMMIT}} and build date {{.BUILD_DATE}}"
+      - echo "Building with commit {{.GIT_COMMIT}} and build date {{quote .BUILD_DATE}}"
       - >
-        go build -v -x -ldflags "{{.LDFLAGS}}" -o dist/muse ./cmd/muse
+        go build -v -x -ldflags {{.LDFLAGS}} -o dist/muse ./cmd/muse
     vars:
       GIT_COMMIT:
         sh: git rev-parse --short HEAD
       BUILD_DATE:
         sh: date -u '+%Y-%m-%d %H:%M:%S'
       LDFLAGS: >-
-        -X github.com/klauern/pre-commit-llm/cmd.CommitHash={{.GIT_COMMIT}}
-        -X github.com/klauern/pre-commit-llm/cmd.BuildDate={{.BUILD_DATE}}
+        -X 'github.com/klauern/muse/cmd.CommitHash={{.GIT_COMMIT}}'
+        -X 'github.com/klauern/muse/cmd.BuildDate={{quote .BUILD_DATE}}'
 
   set-version:
     internal: true

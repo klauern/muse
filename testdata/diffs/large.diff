@@ -112,7 +112,7 @@ diff --git a/go.mod b/go.mod
 index 073be41..4a14724 100644
 --- a/go.mod
 +++ b/go.mod
-@@ -3,6 +3,7 @@ module github.com/klauern/pre-commit-llm
+@@ -3,6 +3,7 @@ module github.com/klauern/muse
  go 1.23.1
 
  require (
@@ -151,9 +151,9 @@ index 861a7b1..d83bfc8 100644
  	"os"
  	"testing"
 
--	"github.com/klauern/pre-commit-llm/llm"
- 	"github.com/klauern/pre-commit-llm/config"
-+	"github.com/klauern/pre-commit-llm/llm"
+-	"github.com/klauern/muse/llm"
+ 	"github.com/klauern/muse/config"
++	"github.com/klauern/muse/llm"
  	"github.com/stretchr/testify/assert"
  	"github.com/stretchr/testify/mock"
  )
@@ -169,7 +169,7 @@ index 3078e75..0000000
 -	"context"
 -	"fmt"
 -
--	"github.com/klauern/pre-commit-llm/config"
+-	"github.com/klauern/muse/config"
 -)
 -
 -type LLMClient struct {
@@ -239,9 +239,9 @@ index 27fa94c..cb1589f 100644
 @@ -7,7 +7,6 @@ import (
  	"time"
 
- 	"github.com/klauern/pre-commit-llm/config"
--	"github.com/klauern/pre-commit-llm/llm"
- 	"github.com/klauern/pre-commit-llm/rag"
+ 	"github.com/klauern/muse/config"
+-	"github.com/klauern/muse/llm"
+ 	"github.com/klauern/muse/rag"
  )
 
 @@ -16,12 +15,12 @@ type Generator interface {

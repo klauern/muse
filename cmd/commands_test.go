@@ -4,17 +4,17 @@ import (
 	"bytes"
 	"testing"
 
-	"github.com/klauern/pre-commit-llm/config"
+	"github.com/klauern/muse/config"
 	"github.com/stretchr/testify/assert"
 	"github.com/urfave/cli/v2"
 )
 
 type cmdTestCase struct {
-	name     string
-	cmd      *cli.Command
-	args     []string
-	wantErr  bool
-	wantOut  string
+	name    string
+	cmd     *cli.Command
+	args    []string
+	wantErr bool
+	wantOut string
 }
 
 func TestCommands(t *testing.T) {

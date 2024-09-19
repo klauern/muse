@@ -5,8 +5,8 @@ import (
 	"log"
 	"os"
 
-	"github.com/klauern/pre-commit-llm/cmd"
-	"github.com/klauern/pre-commit-llm/config"
+	"github.com/klauern/muse/cmd"
+	"github.com/klauern/muse/config"
 	"github.com/urfave/cli/v2"
 )
 
