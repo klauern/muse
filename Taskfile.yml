@@ -153,7 +153,18 @@ tasks:
       - goreleaser build --snapshot --clean
 
   install:
-    desc: "install locally"
+    desc: "Install locally"
     cmds:
       - task: build
-      - cp dist/muse $GOPATH/bin/
+      - |
+        if [ -n "$GOPATH" ] && [ -d "$GOPATH/bin" ]; then
+          cp dist/muse "$GOPATH/bin/"
+          echo "Installed muse to $GOPATH/bin/"
+        elif [ -d "$HOME/go/bin" ]; then
+          cp dist/muse "$HOME/go/bin/"
+          echo "Installed muse to $HOME/go/bin/"
+        else
+          echo "Could not find a suitable installation directory."
+          echo "Please make sure GOPATH is set or $HOME/go/bin exists."
+          exit 1
+        fi
