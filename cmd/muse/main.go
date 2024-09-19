@@ -20,7 +20,7 @@ func main() {
 	app := &cli.App{
 		Name:    "muse",
 		Usage:   "A CLI utility for managing git hooks",
-		Version: cmd.Version,
+		Version: fmt.Sprintf("%s (commit: %s, built at: %s)", cmd.Version, cmd.CommitHash, cmd.BuildDate),
 		Commands: []*cli.Command{
 			cmd.NewStatusCmd(cfg),
 			cmd.NewInstallCmd(cfg),
@@ -33,7 +33,7 @@ func main() {
 				Name:  "version",
 				Usage: "Print the version",
 				Action: func(c *cli.Context) error {
-					fmt.Printf("muse version %s\n", cmd.Version)
+					fmt.Printf("muse version %s\ncommit: %s\nbuilt at: %s\n", cmd.Version, cmd.CommitHash, cmd.BuildDate)
 					return nil
 				},
 			},
