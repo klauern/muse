@@ -6,9 +6,9 @@ import (
 	"path/filepath"
 
 	"github.com/klauern/pre-commit-llm/config"
+	"github.com/klauern/pre-commit-llm/core"
 	"github.com/urfave/cli/v2"
 )
-
 
 func NewStatusCmd(config *config.Config) *cli.Command {
 	return &cli.Command{
@@ -21,7 +21,7 @@ func NewStatusCmd(config *config.Config) *cli.Command {
 }
 
 func checkStatus(config *config.Config) error {
-	gitDir, err := findGitDir()
+	gitDir, err := core.FindGitDir()
 	if err != nil {
 		return fmt.Errorf("failed to find .git directory: %w", err)
 	}

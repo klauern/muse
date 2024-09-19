@@ -1,11 +1,15 @@
 package config
 
 import (
+	_ "embed"
 	"os"
 	"path/filepath"
 
 	"github.com/spf13/viper"
 )
+
+//go:embed example_config.yaml
+var ExampleConfig []byte
 
 type Config struct {
 	Hook Hook      `mapstructure:"hook"`

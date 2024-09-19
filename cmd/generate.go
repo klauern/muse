@@ -5,7 +5,7 @@ import (
 	"os/exec"
 
 	"github.com/klauern/pre-commit-llm/config"
-	"github.com/klauern/pre-commit-llm/core/generator"
+	"github.com/klauern/pre-commit-llm/core"
 	"github.com/klauern/pre-commit-llm/rag"
 	"github.com/urfave/cli/v2"
 )
@@ -44,7 +44,7 @@ func generateCommitMessage(c *cli.Context, cfg *config.Config) error {
 	ragService := &rag.GitRAGService{}
 
 	// Create commit message generator
-	gen, err := generator.NewCommitMessageGenerator(cfg, ragService)
+	gen, err := core.NewCommitMessageGenerator(cfg, ragService)
 	if err != nil {
 		return fmt.Errorf("failed to create commit message generator: %w", err)
 	}
