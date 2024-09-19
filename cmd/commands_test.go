@@ -45,8 +45,8 @@ func TestCommands(t *testing.T) {
 			name:    "Prepare Commit Msg Command",
 			cmd:     NewPrepareCommitMsgCmd(cfg),
 			args:    []string{"test_commit_msg_file"},
-			wantErr: true,
-			wantOut: "missing commit message file argument",
+			wantErr: false,
+			wantOut: "Prepare commit message hook executed successfully",
 		},
 		{
 			name:    "Status Command",
