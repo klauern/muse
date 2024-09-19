@@ -48,6 +48,7 @@ func configureHook(c *cli.Context, config *config.Config) error {
 		return fmt.Errorf("failed to write config: %w", err)
 	}
 
+	fmt.Println("Configuration completed successfully")
 	return nil
 }
 

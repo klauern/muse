@@ -41,5 +41,6 @@ func testLLMService(cfg *config.Config) error {
 	fmt.Println("Test successful! Response from Anthropic API:")
 	fmt.Println(response)
 
+	fmt.Println("LLM service test completed successfully")
 	return nil
 }

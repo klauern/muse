@@ -54,6 +54,7 @@ muse prepare-commit-msg "$1" "$2" "$3"
 	}
 
 	fmt.Println("prepare-commit-msg hook installed successfully")
+	fmt.Println("Hook installed successfully")
 	return nil
 }
 

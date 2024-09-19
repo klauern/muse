@@ -66,6 +66,7 @@ func generateCommitMessage(c *cli.Context, cfg *config.Config) error {
 	// Print the generated message
 	fmt.Printf("Generated commit message using %s provider:\n\n%s\n", provider, message)
 
+	fmt.Println("Commit message generated successfully")
 	return nil
 }
 

@@ -38,5 +38,6 @@ func uninstallHook(config *config.Config) error {
 	}
 
 	fmt.Println("prepare-commit-msg hook uninstalled successfully")
+	fmt.Println("Hook uninstalled successfully")
 	return nil
 }

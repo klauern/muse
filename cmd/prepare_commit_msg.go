@@ -57,5 +57,6 @@ func runPrepareCommitMsg(c *cli.Context, cfg *config.Config) error {
 	}
 
 	fmt.Println("Commit message successfully generated and saved.")
+	fmt.Println("Prepare commit message hook executed successfully")
 	return nil
 }

@@ -36,5 +36,6 @@ func checkStatus(config *config.Config) error {
 
 	fmt.Printf("Hook configuration: Enabled=%v, Type=%s\n", config.Hook.Enabled, config.Hook.Type)
 
+	fmt.Println("Status check completed")
 	return nil
 }
