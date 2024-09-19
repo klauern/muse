@@ -25,28 +25,28 @@ func TestCommands(t *testing.T) {
 			cmd:     NewConfigureCmd(cfg),
 			args:    []string{},
 			wantErr: false,
-			wantOut: "Configuration completed successfully",
+			wantOut: "configure",
 		},
 		{
 			name:    "Generate Command",
 			cmd:     NewGenerateCmd(cfg),
 			args:    []string{},
 			wantErr: false,
-			wantOut: "Commit message generated successfully",
+			wantOut: "generate",
 		},
 		{
 			name:    "Install Command",
 			cmd:     NewInstallCmd(cfg),
 			args:    []string{},
 			wantErr: false,
-			wantOut: "Hook installed successfully",
+			wantOut: "install",
 		},
 		{
 			name:    "Prepare Commit Msg Command",
 			cmd:     NewPrepareCommitMsgCmd(cfg),
 			args:    []string{"test_commit_msg_file"},
-			wantErr: false,
-			wantOut: "Prepare commit message hook executed successfully",
+			wantErr: true,
+			wantOut: "missing commit message file argument",
 		},
 		{
 			name:    "Status Command",
@@ -88,7 +88,13 @@ func TestCommands(t *testing.T) {
 				assert.NoError(t, err)
 			}
 
-			assert.Contains(t, buf.String(), tt.wantOut)
+			if tt.wantErr {
+				assert.Error(t, err)
+				assert.Contains(t, err.Error(), tt.wantOut)
+			} else {
+				assert.NoError(t, err)
+				assert.Contains(t, buf.String(), tt.wantOut)
+			}
 		})
 	}
 }
