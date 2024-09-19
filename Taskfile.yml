@@ -9,8 +9,9 @@ tasks:
     desc: "Build the Go binary"
     cmds:
       - task: set-version
+      - echo "Building with commit {{.GIT_COMMIT}} and build date {{.BUILD_DATE}}"
       - >
-        go build -ldflags "
+        go build -v -x -ldflags "
         -X github.com/klauern/pre-commit-llm/cmd.CommitHash={{.GIT_COMMIT}}
         -X github.com/klauern/pre-commit-llm/cmd.BuildDate={{.BUILD_DATE}}
         " -o dist/muse ./cmd/muse
