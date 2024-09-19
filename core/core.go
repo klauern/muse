@@ -127,6 +127,28 @@ muse prepare-commit-msg "$1" "$2" "$3"
 	return nil
 }
 
+func (i *Installer) Uninstall() error {
+	gitDir, err := FindGitDir()
+	if err != nil {
+		return fmt.Errorf("failed to find .git directory: %w", err)
+	}
+
+	hookPath := filepath.Join(gitDir, "hooks", "prepare-commit-msg")
+
+	// Check if hook exists
+	if _, err := os.Stat(hookPath); os.IsNotExist(err) {
+		return fmt.Errorf("prepare-commit-msg hook does not exist")
+	}
+
+	// Remove the hook file
+	if err := os.Remove(hookPath); err != nil {
+		return fmt.Errorf("failed to remove hook file: %w", err)
+	}
+
+	fmt.Println("prepare-commit-msg hook uninstalled successfully")
+	return nil
+}
+
 func FindGitDir() (string, error) {
 	dir, err := os.Getwd()
 	if err != nil {
