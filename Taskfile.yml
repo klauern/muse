@@ -11,7 +11,7 @@ tasks:
       - task: set-version
       - echo "Building with commit {{.GIT_COMMIT}} and build date {{.BUILD_DATE}}"
       - >
-        go build -v -x -ldflags "
+        go build -v -x -ldflags "-v
         -X github.com/klauern/pre-commit-llm/cmd.CommitHash={{.GIT_COMMIT}}
         -X github.com/klauern/pre-commit-llm/cmd.BuildDate={{.BUILD_DATE}}
         " -o dist/muse ./cmd/muse
