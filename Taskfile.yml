@@ -75,6 +75,13 @@ tasks:
     cmds:
       - go test ./llm -v -tags=integration -run TestOpenAIService
 
+  test:cover:
+    desc: "Run tests with coverage, output and open the coverage report"
+    cmds:
+      - go test ./... -coverprofile=coverage.out
+      - go tool cover -html=coverage.out -o coverage.html
+      - open coverage.html
+
   deps:
     desc: "Ensure gofumpt is installed"
     cmds:
