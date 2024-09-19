@@ -1,12 +1,11 @@
 package cmd
 
 import (
-	"context"
 	"fmt"
 	"os/exec"
 
 	"github.com/klauern/pre-commit-llm/config"
-	"github.com/klauern/pre-commit-llm/llm"
+	"github.com/klauern/pre-commit-llm/core/generator"
 	"github.com/klauern/pre-commit-llm/rag"
 	"github.com/urfave/cli/v2"
 )
@@ -45,7 +44,7 @@ func generateCommitMessage(c *cli.Context, cfg *config.Config) error {
 	ragService := &rag.GitRAGService{}
 
 	// Create commit message generator
-	generator, err := llm.NewCommitMessageGenerator(cfg, ragService)
+	gen, err := generator.NewCommitMessageGenerator(cfg, ragService)
 	if err != nil {
 		return fmt.Errorf("failed to create commit message generator: %w", err)
 	}
@@ -57,8 +56,7 @@ func generateCommitMessage(c *cli.Context, cfg *config.Config) error {
 	}
 
 	// Generate commit message
-	ctx := context.Background()
-	message, err := generator.Generate(ctx, diff, style)
+	message, err := gen.Generate(c.Context, diff, style)
 	if err != nil {
 		return fmt.Errorf("failed to generate commit message: %w", err)
 	}
