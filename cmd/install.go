@@ -6,6 +6,7 @@ import (
 	"path/filepath"
 
 	"github.com/klauern/pre-commit-llm/config"
+	"github.com/klauern/pre-commit-llm/hooks"
 	"github.com/urfave/cli/v2"
 )
 
@@ -20,7 +21,7 @@ func NewInstallCmd(config *config.Config) *cli.Command {
 }
 
 func installHook(config *config.Config) error {
-	gitDir, err := findGitDir()
+	gitDir, err := hooks.FindGitDir()
 	if err != nil {
 		return fmt.Errorf("failed to find .git directory: %w", err)
 	}
@@ -56,23 +57,4 @@ muse prepare-commit-msg "$1" "$2" "$3"
 	fmt.Println("prepare-commit-msg hook installed successfully")
 	fmt.Println("Hook installed successfully")
 	return nil
-}
-
-func findGitDir() (string, error) {
-	dir, err := os.Getwd()
-	if err != nil {
-		return "", err
-	}
-
-	for {
-		if _, err := os.Stat(filepath.Join(dir, ".git")); err == nil {
-			return filepath.Join(dir, ".git"), nil
-		}
-
-		parent := filepath.Dir(dir)
-		if parent == dir {
-			return "", fmt.Errorf("not a git repository")
-		}
-		dir = parent
-	}
 }
