@@ -4,79 +4,83 @@ import (
 	"bytes"
 	"testing"
 
-	"github.com/spf13/cobra"
+	"github.com/klauern/pre-commit-llm/config"
 	"github.com/stretchr/testify/assert"
+	"github.com/urfave/cli/v2"
 )
 
 type cmdTestCase struct {
 	name     string
-	cmd      *cobra.Command
+	cmd      *cli.Command
 	args     []string
 	wantErr  bool
 	wantOut  string
 }
 
 func TestCommands(t *testing.T) {
+	cfg := &config.Config{}
 	tests := []cmdTestCase{
 		{
 			name:    "Configure Command",
-			cmd:     NewConfigureCmd(),
+			cmd:     NewConfigureCmd(cfg),
 			args:    []string{},
 			wantErr: false,
-			wantOut: "Configuration completed successfully\n",
+			wantOut: "Configuration completed successfully",
 		},
 		{
 			name:    "Generate Command",
-			cmd:     NewGenerateCmd(),
+			cmd:     NewGenerateCmd(cfg),
 			args:    []string{},
 			wantErr: false,
-			wantOut: "Commit message generated successfully\n",
+			wantOut: "Commit message generated successfully",
 		},
 		{
 			name:    "Install Command",
-			cmd:     NewInstallCmd(),
+			cmd:     NewInstallCmd(cfg),
 			args:    []string{},
 			wantErr: false,
-			wantOut: "Hook installed successfully\n",
+			wantOut: "Hook installed successfully",
 		},
 		{
 			name:    "Prepare Commit Msg Command",
-			cmd:     NewPrepareCommitMsgCmd(),
-			args:    []string{},
+			cmd:     NewPrepareCommitMsgCmd(cfg),
+			args:    []string{"test_commit_msg_file"},
 			wantErr: false,
-			wantOut: "Prepare commit message hook executed successfully\n",
+			wantOut: "Prepare commit message hook executed successfully",
 		},
 		{
 			name:    "Status Command",
-			cmd:     NewStatusCmd(),
+			cmd:     NewStatusCmd(cfg),
 			args:    []string{},
 			wantErr: false,
-			wantOut: "Status check completed\n",
+			wantOut: "Status check completed",
 		},
 		{
 			name:    "Test Command",
-			cmd:     NewTestCmd(),
+			cmd:     NewTestCmd(cfg),
 			args:    []string{},
 			wantErr: false,
-			wantOut: "LLM service test completed successfully\n",
+			wantOut: "LLM service test completed successfully",
 		},
 		{
 			name:    "Uninstall Command",
-			cmd:     NewUninstallCmd(),
+			cmd:     NewUninstallCmd(cfg),
 			args:    []string{},
 			wantErr: false,
-			wantOut: "Hook uninstalled successfully\n",
+			wantOut: "Hook uninstalled successfully",
 		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
+			app := &cli.App{
+				Commands: []*cli.Command{tt.cmd},
+			}
 			buf := new(bytes.Buffer)
-			tt.cmd.SetOut(buf)
-			tt.cmd.SetErr(buf)
-			tt.cmd.SetArgs(tt.args)
+			app.Writer = buf
+			app.ErrWriter = buf
 
-			err := tt.cmd.Execute()
+			err := app.Run(append([]string{"app"}, tt.args...))
 
 			if tt.wantErr {
 				assert.Error(t, err)
