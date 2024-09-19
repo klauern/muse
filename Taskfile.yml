@@ -98,6 +98,11 @@ tasks:
     sources:
       - "**/*.go"
 
+  test:goreleaser:
+    desc: "Test GoReleaser configuration"
+    cmds:
+      - goreleaser build --snapshot --clean
+
   install:
     desc: "install locally"
     cmds:
