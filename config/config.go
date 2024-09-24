@@ -19,12 +19,6 @@ type Config struct {
 type LLMConfig struct {
 	Provider string                 `mapstructure:"provider"`
 	Config   map[string]interface{} `mapstructure:"config"`
-	Ollama   OllamaConfig           `mapstructure:"ollama"`
-}
-
-type OllamaConfig struct {
-	BaseURL string `mapstructure:"base_url"`
-	Model   string `mapstructure:"model"`
 }
 
 type Hook struct {

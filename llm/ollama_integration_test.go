@@ -8,23 +8,36 @@ import (
 	"testing"
 
 	"github.com/klauern/muse/config"
-	"github.com/stretchr/testify/assert"
 )
 
 func TestOllamaIntegration(t *testing.T) {
 	// Mock server to simulate Ollama API
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		assert.Equal(t, "/api/chat", r.URL.Path)
-		assert.Equal(t, "application/json", r.Header.Get("Content-Type"))
+		if r.URL.Path != "/api/chat" {
+			t.Errorf("Expected to request '/api/chat', got: %s", r.URL.Path)
+		}
+		if r.Header.Get("Content-Type") != "application/json" {
+			t.Errorf("Expected Content-Type: application/json, got: %s", r.Header.Get("Content-Type"))
+		}
 
 		var req OllamaRequest
 		err := json.NewDecoder(r.Body).Decode(&req)
-		assert.NoError(t, err)
+		if err != nil {
+			t.Fatalf("Failed to decode request body: %v", err)
+		}
 
-		assert.Equal(t, "solar-pro:latest", req.Model)
-		assert.False(t, req.Stream)
-		assert.Len(t, req.Messages, 2)
-		assert.Len(t, req.Tools, 1)
+		if req.Model != "solar-pro:latest" {
+			t.Errorf("Expected model 'solar-pro:latest', got: %s", req.Model)
+		}
+		if req.Stream {
+			t.Error("Expected Stream to be false")
+		}
+		if len(req.Messages) != 2 {
+			t.Errorf("Expected 2 messages, got: %d", len(req.Messages))
+		}
+		if len(req.Tools) != 1 {
+			t.Errorf("Expected 1 tool, got: %d", len(req.Tools))
+		}
 
 		// Simulate Ollama response
 		resp := OllamaResponse{
@@ -49,7 +62,9 @@ func TestOllamaIntegration(t *testing.T) {
 	}
 
 	service, err := NewLLMService(cfg)
-	assert.NoError(t, err)
+	if err != nil {
+		t.Fatalf("Failed to create LLM service: %v", err)
+	}
 
 	// Test GenerateCommitMessage
 	ctx := context.Background()
@@ -58,6 +73,10 @@ func TestOllamaIntegration(t *testing.T) {
 	style := DefaultStyle
 
 	message, err := service.GenerateCommitMessage(ctx, diff, context, style)
-	assert.NoError(t, err)
-	assert.Equal(t, "feat(test): Add integration test for Ollama", message)
+	if err != nil {
+		t.Fatalf("GenerateCommitMessage failed: %v", err)
+	}
+	if message != "feat(test): Add integration test for Ollama" {
+		t.Errorf("Expected message 'feat(test): Add integration test for Ollama', got: %s", message)
+	}
 }
