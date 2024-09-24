@@ -23,6 +23,14 @@ const (
 )
 
 func addOrUpdateHookContent(hookPath, hookContent string) error {
+	// Check if the hook file exists, create it if it doesn't
+	if _, err := os.Stat(hookPath); os.IsNotExist(err) {
+		if err := os.WriteFile(hookPath, []byte(hookContent), 0o755); err != nil {
+			return fmt.Errorf("failed to create hook file: %w", err)
+		}
+		return nil
+	}
+
 	existingContent, err := os.ReadFile(hookPath)
 	if err != nil {
 		return fmt.Errorf("failed to read hook file: %w", err)
@@ -31,6 +39,9 @@ func addOrUpdateHookContent(hookPath, hookContent string) error {
 	// Remove content between markers
 	re := regexp.MustCompile(fmt.Sprintf("(?s)%s.*?%s", regexp.QuoteMeta(hookStartMarker), regexp.QuoteMeta(hookEndMarker)))
 	updatedContent := re.ReplaceAllString(string(existingContent), "")
+
+	// Append the new hook content to the existing content
+	updatedContent += "\n" + hookContent
 
 	// Write updated content back to the file
 	if err := os.WriteFile(hookPath, []byte(updatedContent), 0o755); err != nil {
@@ -69,8 +80,17 @@ func generateHookContent(binaryPath, binaryName string, args []string) string {
 	// Construct the hook content
 	hookContent := fmt.Sprintf(`#!/bin/sh
 exec < /dev/tty
-%s/%s%s
-`, binaryPath, binaryName, argsStr)
+
+%s
+# Save the original arguments
+COMMIT_MSG_FILE="$1"
+COMMIT_SOURCE="$2"
+SHA1="$3"
+
+# Execute the binary with the saved arguments
+%s/%s prepare-commit-msg "%s" "%s" "%s"
+%s
+`, hookStartMarker, binaryPath, binaryName, "$COMMIT_MSG_FILE", "$COMMIT_SOURCE", "$SHA1", hookEndMarker)
 
 	return hookContent
 }
@@ -91,10 +111,11 @@ func (i *Installer) Install() error {
 
 	binaryPath := filepath.Dir(exePath)
 	binaryName := filepath.Base(exePath)
-	args := []string{"prepare-commit-msg", "$1", "$2", "$3"} // Example arguments
+	args := []string{"prepare-commit-msg", "$1", "$2", "$3"}
 
 	hookContent := generateHookContent(binaryPath, binaryName, args)
 
+	fmt.Printf("Installing prepare-commit-msg hook... at %s\n", hookPath)
 	if err := addOrUpdateHookContent(hookPath, hookContent); err != nil {
 		return fmt.Errorf("failed to add or update hook content: %w", err)
 	}

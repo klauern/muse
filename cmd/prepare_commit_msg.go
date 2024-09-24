@@ -27,6 +27,15 @@ func runPrepareCommitMsg(c *cli.Context, cfg *config.Config) error {
 	}
 
 	commitMsgFile := c.Args().Get(0)
+	var commitSource string
+	if c.NArg() > 1 {
+		commitSource = c.Args().Get(1)
+	}
+
+	// check the commitSource isn't message, squash, or merge
+	if commitSource == "message" || commitSource == "squash" || commitSource == "merge" {
+		return nil
+	}
 
 	// Get the git diff
 	diff, err := getGitDiff()
