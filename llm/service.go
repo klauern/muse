@@ -54,10 +54,7 @@ func NewLLMService(cfg *config.LLMConfig) (LLMService, error) {
 	}
 	
 	if cfg.Provider == "ollama" {
-		return provider.NewService(map[string]interface{}{
-			"base_url": cfg.Ollama.BaseURL,
-			"model":    cfg.Ollama.Model,
-		})
+		return provider.NewService(cfg.Config)
 	}
 	
 	return provider.NewService(cfg.Config)

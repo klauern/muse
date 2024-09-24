@@ -55,9 +55,9 @@ func TestOllamaIntegration(t *testing.T) {
 	// Create Ollama service with mock server URL
 	cfg := &config.LLMConfig{
 		Provider: "ollama",
-		Ollama: config.OllamaConfig{
-			BaseURL: server.URL,
-			Model:   "solar-pro:latest",
+		Config: map[string]interface{}{
+			"base_url": server.URL,
+			"model":    "solar-pro:latest",
 		},
 	}
 

@@ -7,8 +7,6 @@ import (
 	"fmt"
 	"io/ioutil"
 	"net/http"
-
-	"github.com/klauern/muse/config"
 )
 
 type OllamaProvider struct{}
