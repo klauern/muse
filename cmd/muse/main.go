@@ -7,7 +7,6 @@ import (
 
 	"github.com/klauern/muse/cmd"
 	"github.com/klauern/muse/config"
-	"github.com/klauern/muse/llm"
 	"github.com/urfave/cli/v2"
 )
 
