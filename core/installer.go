@@ -24,32 +24,34 @@ const (
 )
 
 func addOrUpdateHookContent(hookPath, hookContent string) error {
-	// Check if the hook file exists, create it if it doesn't
+	var existingContent []byte
+	var err error
+
+	// Check if the hook file exists
 	if _, err := os.Stat(hookPath); os.IsNotExist(err) {
-		return os.WriteFile(hookPath, []byte(hookContent), 0o755)
+		// Case 2: File doesn't exist, create it with shebang and hook content
+		fullContent := "#!/bin/sh\n\n" + hookContent
+		return os.WriteFile(hookPath, []byte(fullContent), 0o755)
 	}
 
-	existingContent, err := os.ReadFile(hookPath)
+	// File exists, read its content
+	existingContent, err = os.ReadFile(hookPath)
 	if err != nil {
 		return fmt.Errorf("failed to read hook file: %w", err)
 	}
 
-	// Remove content between markers and any duplicate "exec < /dev/tty" lines
+	// Remove any existing MUSE hook content
 	re := regexp.MustCompile(fmt.Sprintf("(?s)%s.*?%s", regexp.QuoteMeta(hookStartMarker), regexp.QuoteMeta(hookEndMarker)))
 	updatedContent := re.ReplaceAllString(string(existingContent), "")
-	updatedContent = regexp.MustCompile(`(?m)^exec < /dev/tty\n+`).ReplaceAllString(updatedContent, "")
 
-	// Ensure there's only one "exec < /dev/tty" line at the beginning
-	updatedContent = strings.TrimSpace(updatedContent)
-	if !strings.HasPrefix(updatedContent, "#!/bin/sh") {
-		updatedContent = "#!/bin/sh\n" + updatedContent
+	// Case 1: File already has content (e.g., lefthook)
+	if len(strings.TrimSpace(updatedContent)) > 0 {
+		// Append the new hook content without shebang
+		updatedContent = strings.TrimSpace(updatedContent) + "\n\n" + hookContent
+	} else {
+		// Case 2: File is empty or only contained MUSE hook
+		updatedContent = "#!/bin/sh\n\n" + hookContent
 	}
-	if !strings.Contains(updatedContent, "exec < /dev/tty") {
-		updatedContent = "#!/bin/sh\nexec < /dev/tty\n\n" + strings.TrimPrefix(updatedContent, "#!/bin/sh\n")
-	}
-
-	// Append the new hook content
-	updatedContent += "\n\n" + hookContent
 
 	// Write updated content back to the file
 	return os.WriteFile(hookPath, []byte(updatedContent), 0o755)
