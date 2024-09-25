@@ -5,6 +5,7 @@ import (
 	"os"
 	"path/filepath"
 	"regexp"
+	"strings"
 
 	"github.com/klauern/muse/config"
 )
@@ -25,10 +26,7 @@ const (
 func addOrUpdateHookContent(hookPath, hookContent string) error {
 	// Check if the hook file exists, create it if it doesn't
 	if _, err := os.Stat(hookPath); os.IsNotExist(err) {
-		if err := os.WriteFile(hookPath, []byte(hookContent), 0o755); err != nil {
-			return fmt.Errorf("failed to create hook file: %w", err)
-		}
-		return nil
+		return os.WriteFile(hookPath, []byte(hookContent), 0o755)
 	}
 
 	existingContent, err := os.ReadFile(hookPath)
@@ -36,24 +34,25 @@ func addOrUpdateHookContent(hookPath, hookContent string) error {
 		return fmt.Errorf("failed to read hook file: %w", err)
 	}
 
-	// Remove content between markers
+	// Remove content between markers and any duplicate "exec < /dev/tty" lines
 	re := regexp.MustCompile(fmt.Sprintf("(?s)%s.*?%s", regexp.QuoteMeta(hookStartMarker), regexp.QuoteMeta(hookEndMarker)))
 	updatedContent := re.ReplaceAllString(string(existingContent), "")
+	updatedContent = regexp.MustCompile(`(?m)^exec < /dev/tty\n+`).ReplaceAllString(updatedContent, "")
 
-	// Check if the shebang line already exists
-	if !strings.HasPrefix(strings.TrimSpace(updatedContent), "#!/bin/sh") {
+	// Ensure there's only one "exec < /dev/tty" line at the beginning
+	updatedContent = strings.TrimSpace(updatedContent)
+	if !strings.HasPrefix(updatedContent, "#!/bin/sh") {
 		updatedContent = "#!/bin/sh\n" + updatedContent
 	}
-
-	// Append the new hook content to the existing content
-	updatedContent += "\n" + hookContent
-
-	// Write updated content back to the file
-	if err := os.WriteFile(hookPath, []byte(updatedContent), 0o755); err != nil {
-		return fmt.Errorf("failed to write hook content: %w", err)
+	if !strings.Contains(updatedContent, "exec < /dev/tty") {
+		updatedContent = "#!/bin/sh\nexec < /dev/tty\n\n" + strings.TrimPrefix(updatedContent, "#!/bin/sh\n")
 	}
 
-	return nil
+	// Append the new hook content
+	updatedContent += "\n\n" + hookContent
+
+	// Write updated content back to the file
+	return os.WriteFile(hookPath, []byte(updatedContent), 0o755)
 }
 
 func removeHookContent(hookPath string) error {
@@ -76,26 +75,17 @@ func removeHookContent(hookPath string) error {
 }
 
 func generateHookContent(binaryPath, binaryName string, args []string) string {
-	// Join the arguments into a single string
-	argsStr := ""
-	for _, arg := range args {
-		argsStr += fmt.Sprintf(" \"%s\"", arg)
-	}
-
 	// Construct the hook content
-	hookContent := fmt.Sprintf(`
-exec < /dev/tty
-
-%s
+	hookContent := fmt.Sprintf(`%s
 # Save the original arguments
 COMMIT_MSG_FILE="$1"
 COMMIT_SOURCE="$2"
 SHA1="$3"
 
 # Execute the binary with the saved arguments
-%s/%s prepare-commit-msg "%s" "%s" "%s"
+%s/%s prepare-commit-msg "$COMMIT_MSG_FILE" "$COMMIT_SOURCE" "$SHA1"
 %s
-`, hookStartMarker, binaryPath, binaryName, "$COMMIT_MSG_FILE", "$COMMIT_SOURCE", "$SHA1", hookEndMarker)
+`, hookStartMarker, binaryPath, binaryName, hookEndMarker)
 
 	return hookContent
 }
