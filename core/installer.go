@@ -40,6 +40,11 @@ func addOrUpdateHookContent(hookPath, hookContent string) error {
 	re := regexp.MustCompile(fmt.Sprintf("(?s)%s.*?%s", regexp.QuoteMeta(hookStartMarker), regexp.QuoteMeta(hookEndMarker)))
 	updatedContent := re.ReplaceAllString(string(existingContent), "")
 
+	// Check if the shebang line already exists
+	if !strings.HasPrefix(strings.TrimSpace(updatedContent), "#!/bin/sh") {
+		updatedContent = "#!/bin/sh\n" + updatedContent
+	}
+
 	// Append the new hook content to the existing content
 	updatedContent += "\n" + hookContent
 
@@ -78,7 +83,7 @@ func generateHookContent(binaryPath, binaryName string, args []string) string {
 	}
 
 	// Construct the hook content
-	hookContent := fmt.Sprintf(`#!/bin/sh
+	hookContent := fmt.Sprintf(`
 exec < /dev/tty
 
 %s
