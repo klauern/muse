@@ -6,6 +6,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
+	"log/slog"
 	"net/http"
 	"os"
 	"regexp"
@@ -76,7 +77,7 @@ func NewAnthropicService(apiKey, model string) *AnthropicService {
 
 func (s *AnthropicService) GenerateCommitMessage(ctx context.Context, diff, context string, style CommitStyle) (string, error) {
 	if err := validateCommitStyle(style); err != nil {
-		return "", err
+		return "", fmt.Errorf("failed to validate commit style: %w", err)
 	}
 
 	systemPrompt, err := createSystemPrompt(diff, context, style)
@@ -86,9 +87,11 @@ func (s *AnthropicService) GenerateCommitMessage(ctx context.Context, diff, cont
 
 	req := createRequest(s.model, systemPrompt, diff, context)
 
+	slog.Debug("Sending request to Anthropic API", "model", s.model, "style", style)
 	response, err := sendRequest(ctx, s.apiKey, req)
 	if err != nil {
-		return "", err
+		slog.Error("Failed to send request to Anthropic API", "error", err)
+		return "", fmt.Errorf("failed to send request to Anthropic API: %w", err)
 	}
 
 	return formatCommitMessage(response)
@@ -143,7 +146,7 @@ func createRequest(model, systemPrompt, diff, context string) *Request {
 
 	return &Request{
 		Model:     model,
-		MaxTokens: 200,
+		MaxTokens: 2000,
 		System:    systemPrompt,
 		Messages: []Message{
 			{Role: "user", Content: fmt.Sprintf("Generate a commit message for this diff:\n\n%s\n\nAdditional context:\n%s", diff, context)},
