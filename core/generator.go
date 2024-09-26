@@ -33,6 +33,17 @@ func (g *CommitMessageGenerator) Generate(ctx context.Context, diff string, comm
 		return "", fmt.Errorf("failed to get relevant context: %w", err)
 	}
 
+	// Add example commit messages to the context
+	examples := `
+Examples:
+{"type":"feat","scope":"user-auth","subject":"add login functionality","body":"Implemented user login with email and password authentication."}
+{"type":"fix","scope":"api","subject":"resolve race condition in data fetching","body":"Fixed a race condition that occurred when multiple requests were made simultaneously to the data fetching endpoint."}
+{"type":"docs","scope":"readme","subject":"update installation instructions","body":"Updated the README with clearer installation steps and added troubleshooting section."}
+{"type":"refactor","scope":"database","subject":"optimize query performance","body":"Refactored database queries to use indexing, resulting in a 50% reduction in query execution time."}
+{"type":"test","scope":"unit-tests","subject":"add tests for user registration","body":"Added comprehensive unit tests to cover all scenarios of the user registration process."}
+`
+	context = context + "\n" + examples
+
 	style := llm.GetCommitStyleFromString(commitStyle)
 
 	maxRetries := 3
