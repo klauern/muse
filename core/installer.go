@@ -84,8 +84,15 @@ COMMIT_MSG_FILE="$1"
 COMMIT_SOURCE="$2"
 SHA1="$3"
 
+# Check if verbose flag is set
+if [ "$MUSE_VERBOSE" = "true" ]; then
+    VERBOSE_FLAG="--verbose"
+else
+    VERBOSE_FLAG=""
+fi
+
 # Execute the binary with the saved arguments
-%s/%s prepare-commit-msg "$COMMIT_MSG_FILE" "$COMMIT_SOURCE" "$SHA1"
+%s/%s prepare-commit-msg $VERBOSE_FLAG "$COMMIT_MSG_FILE" "$COMMIT_SOURCE" "$SHA1"
 %s
 `, hookStartMarker, binaryPath, binaryName, hookEndMarker)
 
