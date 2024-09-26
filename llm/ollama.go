@@ -72,7 +72,11 @@ type OllamaResponse struct {
 func (s *OllamaService) GenerateCommitMessage(ctx context.Context, diff, context string, style CommitStyle) (string, error) {
 	messages := []OllamaMessage{
 		{Role: "system", Content: "You are a helpful assistant that generates commit messages based on code diffs."},
-		{Role: "user", Content: fmt.Sprintf("Generate a commit message for this diff:\n\n%s\n\nAdditional context:\n%s", diff, context)},
+		{Role: "user", Content: "Here are some examples of the commit messages I want you to generate:"},
+		{Role: "assistant", Content: `{"type":"feat","scope":"user-auth","subject":"add login functionality","body":"Implemented user login with email and password authentication."}`},
+		{Role: "user", Content: "Great! Here's another example:"},
+		{Role: "assistant", Content: `{"type":"fix","scope":"api","subject":"resolve race condition in data fetching","body":"Fixed a race condition that occurred when multiple requests were made simultaneously to the data fetching endpoint."}`},
+		{Role: "user", Content: fmt.Sprintf("Now, generate a commit message for this diff:\n\n%s\n\nAdditional context:\n%s", diff, context)},
 	}
 
 	tools := []OllamaTool{
