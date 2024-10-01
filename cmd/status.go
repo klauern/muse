@@ -6,7 +6,7 @@ import (
 	"path/filepath"
 
 	"github.com/klauern/muse/config"
-	"github.com/klauern/muse/core"
+	"github.com/klauern/muse/hooks"
 	"github.com/urfave/cli/v2"
 )
 
@@ -21,7 +21,7 @@ func NewStatusCmd(config *config.Config) *cli.Command {
 }
 
 func checkStatus(config *config.Config) error {
-	gitDir, err := core.FindGitDir()
+	gitDir, err := hooks.FindGitDir()
 	if err != nil {
 		return fmt.Errorf("failed to find .git directory: %w", err)
 	}

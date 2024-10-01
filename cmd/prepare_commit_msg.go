@@ -4,10 +4,10 @@ import (
 	"context"
 	"fmt"
 	"os"
+	"os/exec"
 
 	"github.com/klauern/muse/config"
 	"github.com/klauern/muse/llm"
-	"github.com/klauern/muse/rag"
 	"github.com/urfave/cli/v2"
 )
 
@@ -67,11 +67,8 @@ func runPrepareCommitMsg(c *cli.Context, cfg *config.Config) error {
 		fmt.Printf("Git diff obtained, length: %d characters\n", len(diff))
 	}
 
-	// Create RAG service
-	ragService := &rag.GitRAGService{}
-
 	// Create commit message generator
-	generator, err := llm.NewCommitMessageGenerator(cfg, ragService)
+	generator, err := llm.NewCommitMessageGenerator(cfg)
 	if err != nil {
 		return fmt.Errorf("failed to create commit message generator: %w", err)
 	}
@@ -104,4 +101,13 @@ func runPrepareCommitMsg(c *cli.Context, cfg *config.Config) error {
 	fmt.Println("Commit message successfully generated and saved.")
 	fmt.Println("Prepare commit message hook executed successfully")
 	return nil
+}
+
+func getGitDiff() (string, error) {
+	cmd := exec.Command("git", "diff", "--cached")
+	output, err := cmd.Output()
+	if err != nil {
+		return "", err
+	}
+	return string(output), nil
 }

@@ -31,7 +31,7 @@ func (cs CommitStyle) String() string {
 
 // LLMService defines the interface for LLM providers
 type LLMService interface {
-	GenerateCommitMessage(ctx context.Context, diff, context string, style CommitStyle) (string, error)
+	GenerateCommitMessage(ctx context.Context, diff string, style CommitStyle) (string, error)
 }
 
 // LLMProvider defines the interface for creating LLM services
@@ -52,11 +52,11 @@ func NewLLMService(cfg *config.LLMConfig) (LLMService, error) {
 	if !ok {
 		return nil, fmt.Errorf("unsupported LLM provider: %s", cfg.Provider)
 	}
-	
+
 	if cfg.Provider == "ollama" {
 		return provider.NewService(cfg.Config)
 	}
-	
+
 	return provider.NewService(cfg.Config)
 }
 

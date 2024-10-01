@@ -7,7 +7,6 @@ import (
 	"time"
 
 	"github.com/klauern/muse/config"
-	"github.com/klauern/muse/rag"
 )
 
 type Generator interface {
@@ -16,10 +15,20 @@ type Generator interface {
 
 type CommitMessageGenerator struct {
 	LLMService LLMService
-	RAGService rag.RAGService
 }
 
-func NewCommitMessageGenerator(cfg *config.Config, ragService rag.RAGService) (*CommitMessageGenerator, error) {
+type GeneratedCommitMessage struct {
+	Type    string `json:"type" jsonschema:"title=Type of commit message,description=Type of commit message,enum=feat,enum=fix,enum=chore,enum=docs,enum=style,enum=refactor,enum=perf,enum=test,enum=ci,enum=build,enum=release,required=true"`
+	Scope   string `json:"scope,omitempty" jsonschema:"title=Scope of commit message,description=Scope of commit message,optional=true"`
+	Subject string `json:"subject" jsonschema:"title=Subject of commit message,description=Subject of commit message,maxLength=72,required=true"`
+	Body    string `json:"body" jsonschema:"title=Body of commit message,description=Detailed description of commit message,optional=true"`
+}
+
+func (g GeneratedCommitMessage) String() string {
+	return fmt.Sprintf("%s(%s): %s\n\n%s", g.Type, g.Scope, g.Subject, g.Body)
+}
+
+func NewCommitMessageGenerator(cfg *config.Config) (*CommitMessageGenerator, error) {
 	llmService, err := NewLLMService(&cfg.LLM)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create LLM service: %w", err)
@@ -27,44 +36,25 @@ func NewCommitMessageGenerator(cfg *config.Config, ragService rag.RAGService) (*
 
 	return &CommitMessageGenerator{
 		LLMService: llmService,
-		RAGService: ragService,
 	}, nil
 }
 
 func (g *CommitMessageGenerator) Generate(ctx context.Context, diff string, commitStyle string) (string, error) {
 	fmt.Println("Starting commit message generation")
 
-	context, err := g.RAGService.GetRelevantContext(ctx, diff)
-	if err != nil {
-		fmt.Printf("Failed to get relevant context: %v\n", err)
-		return "", fmt.Errorf("failed to get relevant context: %w", err)
-	}
-	fmt.Println("Successfully retrieved relevant context")
-
 	style := GetCommitStyleFromString(commitStyle)
 
 	maxRetries := 3
 	for i := 0; i < maxRetries; i++ {
 		fmt.Printf("Attempt %d to generate commit message\n", i+1)
-		message, err := g.LLMService.GenerateCommitMessage(ctx, diff, context, style)
+		message, err := g.LLMService.GenerateCommitMessage(ctx, diff, style)
 		if err == nil {
 			fmt.Printf("Successfully generated commit message: %s\n", message)
 			// Attempt to parse the JSON to ensure it's valid
-			var parsedMessage struct {
-				Type    string `json:"type"`
-				Scope   string `json:"scope"`
-				Subject string `json:"subject"`
-				Body    string `json:"body"`
-			}
+			var parsedMessage GeneratedCommitMessage
 			if err := json.Unmarshal([]byte(message), &parsedMessage); err == nil {
-				// Format the commit message
-				formattedMessage := fmt.Sprintf("%s(%s): %s\n\n%s",
-					parsedMessage.Type,
-					parsedMessage.Scope,
-					parsedMessage.Subject,
-					parsedMessage.Body)
 				fmt.Println("Successfully generated and parsed commit message")
-				return formattedMessage, nil
+				return parsedMessage.String(), nil
 			} else {
 				fmt.Printf("Failed to parse commit message JSON: %v\n", err)
 			}

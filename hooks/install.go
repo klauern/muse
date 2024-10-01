@@ -1,4 +1,4 @@
-package core
+package hooks
 
 import (
 	"fmt"
@@ -8,7 +8,6 @@ import (
 	"strings"
 
 	"github.com/klauern/muse/config"
-	"github.com/klauern/muse/hooks"
 )
 
 type Installer struct {
@@ -101,7 +100,7 @@ fi
 }
 
 func (i *Installer) Install() error {
-	gitDir, err := hooks.FindGitDir()
+	gitDir, err := FindGitDir()
 	if err != nil {
 		return fmt.Errorf("failed to find .git directory: %w", err)
 	}
@@ -130,7 +129,7 @@ func (i *Installer) Install() error {
 }
 
 func (i *Installer) Uninstall() error {
-	gitDir, err := hooks.FindGitDir()
+	gitDir, err := FindGitDir()
 	if err != nil {
 		return fmt.Errorf("failed to find .git directory: %w", err)
 	}
@@ -149,4 +148,23 @@ func (i *Installer) Uninstall() error {
 	}
 
 	return nil
+}
+
+func FindGitDir() (string, error) {
+	dir, err := os.Getwd()
+	if err != nil {
+		return "", err
+	}
+
+	for {
+		if _, err := os.Stat(filepath.Join(dir, ".git")); err == nil {
+			return filepath.Join(dir, ".git"), nil
+		}
+
+		parent := filepath.Dir(dir)
+		if parent == dir {
+			return "", fmt.Errorf("not a git repository")
+		}
+		dir = parent
+	}
 }

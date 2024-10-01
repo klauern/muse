@@ -8,7 +8,6 @@ import (
 
 	"github.com/klauern/muse/config"
 	"github.com/klauern/muse/llm"
-	"github.com/klauern/muse/rag"
 )
 
 type PrepareCommitMsgHook interface {
@@ -81,8 +80,7 @@ func getGitDiff() (string, error) {
 
 func NewHook(cfg *config.Config) (PrepareCommitMsgHook, error) {
 	if cfg.Hook.Enabled {
-		ragService := &rag.GitRAGService{}
-		generator, err := llm.NewCommitMessageGenerator(cfg, ragService)
+		generator, err := llm.NewCommitMessageGenerator(cfg)
 		if err != nil {
 			return nil, fmt.Errorf("failed to create commit message generator: %w", err)
 		}
