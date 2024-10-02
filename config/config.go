@@ -2,67 +2,66 @@ package config
 
 import (
 	_ "embed"
+	"fmt"
 	"os"
-	"path/filepath"
+	"strings"
 
-	"github.com/spf13/viper"
+	"github.com/knadh/koanf"
+	"github.com/knadh/koanf/parsers/yaml"
+	"github.com/knadh/koanf/providers/env"
+	"github.com/knadh/koanf/providers/file"
 )
 
 //go:embed example_config.yaml
 var ExampleConfig []byte
 
 type Config struct {
-	Hook Hook      `mapstructure:"hook"`
-	LLM  LLMConfig `mapstructure:"llm"`
+	Hook Hook      `koanf:"hook"`
+	LLM  LLMConfig `koanf:"llm"`
 }
 
 type LLMConfig struct {
-	Provider string                 `mapstructure:"provider"`
-	Config   map[string]interface{} `mapstructure:"config"`
+	Provider string                 `koanf:"provider"`
+	Config   map[string]interface{} `koanf:"config"`
 }
 
 type Hook struct {
-	Enabled     bool   `mapstructure:"enabled"`
-	Type        string `mapstructure:"type"`
-	CommitStyle string `mapstructure:"commit_style"`
-	DryRun      bool   `mapstructure:"dry_run"`
-	Preview     bool   `mapstructure:"preview"`
+	Type        string `koanf:"type"`
+	CommitStyle string `koanf:"commit_style"`
+	Preview     bool   `koanf:"preview"`
+	DryRun      bool   `koanf:"dry_run"`
 }
 
+// LoadConfig loads the configuration from YAML and environment variables
 func LoadConfig() (*Config, error) {
-	v := viper.New()
-	v.SetConfigName("muse")
-	v.SetConfigType("yaml")
+	k := koanf.New(".")
 
-	setDefaults(v)
-	setConfigPaths(v)
+	// Load YAML config file
+	if err := k.Load(file.Provider("muse.yaml"), yaml.Parser()); err != nil {
+		return nil, fmt.Errorf("error loading config: %v", err)
+	}
 
-	v.AutomaticEnv()
-	v.SetEnvPrefix("MUSE")
+	// Load environment variables, with "MUSE_" prefix (ignores case)
+	k.Load(env.Provider("MUSE_", ".", func(s string) string {
+		return strings.Replace(strings.ToLower(s), "_", ".", -1)
+	}), nil)
 
-	if err := v.ReadInConfig(); err != nil {
-		if _, ok := err.(viper.ConfigFileNotFoundError); !ok {
-			return nil, err
+	// Unmarshal into the struct
+	var config Config
+	if err := k.Unmarshal("", &config); err != nil {
+		return nil, fmt.Errorf("error unmarshaling config: %v", err)
+	}
+
+	// Handle API keys with environment fallback
+	for key, value := range config.LLM.Config {
+		envKey := strings.ToUpper(fmt.Sprintf("%s_API_KEY", key))
+		envValue := os.Getenv(envKey)
+		if envValue != "" {
+			config.LLM.Config[key] = envValue
+		} else if strValue, ok := value.(string); ok && strValue == "" {
+			config.LLM.Config[key] = "your-default-api-key" // final fallback
 		}
 	}
 
-	var config Config
-	if err := v.Unmarshal(&config); err != nil {
-		return nil, err
-	}
-
 	return &config, nil
-}
-
-func setDefaults(v *viper.Viper) {
-	v.SetDefault("hook.llm_provider", "anthropic")
-	v.SetDefault("hook.commit_style", "default")
-}
-
-func setConfigPaths(v *viper.Viper) {
-	v.AddConfigPath(".")
-	v.AddConfigPath("$HOME/.config/muse")
-	if xdgConfig := os.Getenv("XDG_CONFIG_HOME"); xdgConfig != "" {
-		v.AddConfigPath(filepath.Join(xdgConfig, "muse"))
-	}
 }

@@ -79,21 +79,9 @@ func getGitDiff() (string, error) {
 }
 
 func NewHook(cfg *config.Config) (PrepareCommitMsgHook, error) {
-	if cfg.Hook.Enabled {
-		generator, err := llm.NewCommitMessageGenerator(cfg)
-		if err != nil {
-			return nil, fmt.Errorf("failed to create commit message generator: %w", err)
-		}
-		return &LLMHook{Generator: generator, Config: cfg}, nil
+	generator, err := llm.NewCommitMessageGenerator(cfg)
+	if err != nil {
+		return nil, fmt.Errorf("failed to create commit message generator: %w", err)
 	}
-	return &DefaultHook{}, nil
-}
-
-// DefaultHook is a no-op hook that doesn't modify the commit message
-type DefaultHook struct{}
-
-func (h *DefaultHook) Run(commitMsgFile string, commitSource string, sha1 string) error {
-	// This hook doesn't modify the commit message, so we just return nil
-	fmt.Println("DefaultHook: No modifications made to the commit message.")
-	return nil
+	return &LLMHook{Generator: generator, Config: cfg}, nil
 }
