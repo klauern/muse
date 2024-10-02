@@ -76,9 +76,8 @@ func removeHookContent(hookPath string) error {
 	return nil
 }
 
-func generateHookContent(binaryPath, binaryName string, args []string) string {
-	// Construct the hook content
-	hookContent := fmt.Sprintf(`%s
+func generateHookScript(binaryPath, binaryName string) string {
+	return fmt.Sprintf(`%s
 # Save the original arguments
 COMMIT_MSG_FILE="$1"
 COMMIT_SOURCE="$2"
@@ -95,8 +94,17 @@ fi
 %s/%s prepare-commit-msg $VERBOSE_FLAG "$COMMIT_MSG_FILE" "$COMMIT_SOURCE" "$SHA1"
 %s
 `, hookStartMarker, binaryPath, binaryName, hookEndMarker)
+}
 
-	return hookContent
+func getExecutableInfo() (string, string, string, error) {
+	exePath, err := os.Executable()
+	if err != nil {
+		return "", "", "", fmt.Errorf("failed to get executable path: %w", err)
+	}
+
+	binaryPath := filepath.Dir(exePath)
+	binaryName := filepath.Base(exePath)
+	return exePath, binaryPath, binaryName, nil
 }
 
 func (i *Installer) Install() error {
@@ -107,17 +115,12 @@ func (i *Installer) Install() error {
 
 	hookPath := filepath.Join(gitDir, "hooks", "prepare-commit-msg")
 
-	// Get the path of the currently running executable
-	exePath, err := os.Executable()
+	_, binaryPath, binaryName, err := getExecutableInfo()
 	if err != nil {
-		return fmt.Errorf("failed to get executable path: %w", err)
+		return err
 	}
 
-	binaryPath := filepath.Dir(exePath)
-	binaryName := filepath.Base(exePath)
-	args := []string{"prepare-commit-msg", "$1", "$2", "$3"}
-
-	hookContent := generateHookContent(binaryPath, binaryName, args)
+	hookContent := generateHookScript(binaryPath, binaryName)
 
 	fmt.Printf("Installing prepare-commit-msg hook... at %s\n", hookPath)
 	if err := addOrUpdateHookContent(hookPath, hookContent); err != nil {
