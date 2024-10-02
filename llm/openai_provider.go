@@ -3,78 +3,52 @@ package llm
 import (
 	"context"
 	"fmt"
+	"os"
+
+	"github.com/instructor-ai/instructor-go/pkg/instructor"
+	"github.com/klauern/muse/config"
 	"github.com/sashabaranov/go-openai"
-	"muse/config"
 )
 
-type OpenAIService struct {
-	client *openai.Client
-	model  string
+type OpenAIProvider struct{}
+
+func init() {
+	RegisterProvider("openai", &OpenAIProvider{})
 }
 
-func NewOpenAIService(cfg map[string]interface{}) (LLMService, error) {
-	apiKey, ok := cfg["api_key"].(string)
-	if !ok || apiKey == "" {
-		return nil, fmt.Errorf("OpenAI API key is missing or invalid")
+type OpenAIService struct {
+	client *instructor.Client
+}
+
+func (p *OpenAIProvider) NewService(cfg map[string]interface{}) (LLMService, error) {
+	apiKey := os.Getenv("OPENAI_API_KEY")
+	if apiKey == "" {
+		return nil, fmt.Errorf("OPENAI_API_KEY environment variable is not set")
 	}
 
-	model, ok := cfg["model"].(string)
-	if !ok || model == "" {
-		model = "gpt-3.5-turbo" // Default model if not specified
+	model := "gpt-3.5-turbo"
+	if modelCfg, ok := cfg["model"].(string); ok && modelCfg != "" {
+		model = modelCfg
 	}
 
-	apiBase, ok := cfg["api_base"].(string)
-	if !ok || apiBase == "" {
-		apiBase = openai.DefaultConfig("").BaseURL // Use default if not specified
+	client, err := instructor.NewClient(apiKey, instructor.WithModel(model))
+	if err != nil {
+		return nil, fmt.Errorf("failed to create OpenAI client: %w", err)
 	}
 
-	config := openai.DefaultConfig(apiKey)
-	config.BaseURL = apiBase
-
-	client := openai.NewClientWithConfig(config)
-
-	return &OpenAIService{
-		client: client,
-		model:  model,
-	}, nil
+	return &OpenAIService{client: client}, nil
 }
 
 func (s *OpenAIService) GenerateCommitMessage(ctx context.Context, diff string, style CommitStyle) (string, error) {
-	prompt := generatePrompt(diff, style)
+	template := GetCommitTemplate(style)
 
-	resp, err := s.client.CreateChatCompletion(
-		ctx,
-		openai.ChatCompletionRequest{
-			Model: s.model,
-			Messages: []openai.ChatCompletionMessage{
-				{
-					Role:    openai.ChatMessageRoleUser,
-					Content: prompt,
-				},
-			},
-		},
-	)
+	prompt := fmt.Sprintf("Given the following git diff, generate a commit message in the %s style:\n\n%s", style, diff)
 
+	var message GeneratedCommitMessage
+	err := s.client.CreateCompletion(ctx, prompt, &message)
 	if err != nil {
-		return "", fmt.Errorf("OpenAI API error: %w", err)
+		return "", fmt.Errorf("failed to generate commit message: %w", err)
 	}
 
-	if len(resp.Choices) == 0 {
-		return "", fmt.Errorf("no response from OpenAI")
-	}
-
-	return resp.Choices[0].Message.Content, nil
-}
-
-func generatePrompt(diff string, style CommitStyle) string {
-	basePrompt := fmt.Sprintf("Given the following git diff, generate a commit message:\n\n%s\n\n", diff)
-
-	switch style {
-	case ConventionalCommit:
-		return basePrompt + "Please format the commit message following the Conventional Commits specification."
-	case DetailedCommit:
-		return basePrompt + "Please provide a detailed commit message with a summary and bullet points for changes."
-	default:
-		return basePrompt + "Please provide a concise and informative commit message."
-	}
+	return message.String(), nil
 }

@@ -17,16 +17,6 @@ type CommitMessageGenerator struct {
 	LLMService LLMService
 }
 
-type GeneratedCommitMessage struct {
-	Type    string `json:"type" jsonschema:"title=Type of commit message,description=Type of commit message,enum=feat,enum=fix,enum=chore,enum=docs,enum=style,enum=refactor,enum=perf,enum=test,enum=ci,enum=build,enum=release,required=true"`
-	Scope   string `json:"scope,omitempty" jsonschema:"title=Scope of commit message,description=Scope of commit message,optional=true"`
-	Subject string `json:"subject" jsonschema:"title=Subject of commit message,description=Subject of commit message,maxLength=72,required=true"`
-	Body    string `json:"body" jsonschema:"title=Body of commit message,description=Detailed description of commit message,optional=true"`
-}
-
-func (g GeneratedCommitMessage) String() string {
-	return fmt.Sprintf("%s(%s): %s\n\n%s", g.Type, g.Scope, g.Subject, g.Body)
-}
 
 func NewCommitMessageGenerator(cfg *config.Config) (*CommitMessageGenerator, error) {
 	llmService, err := NewLLMService(&cfg.LLM)
