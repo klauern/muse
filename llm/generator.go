@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"github.com/klauern/muse/config"
+	"github.com/klauern/muse/templates"
 )
 
 type Generator interface {
@@ -16,7 +17,6 @@ type Generator interface {
 type CommitMessageGenerator struct {
 	LLMService LLMService
 }
-
 
 func NewCommitMessageGenerator(cfg *config.Config) (*CommitMessageGenerator, error) {
 	llmService, err := NewLLMService(&cfg.LLM)
@@ -41,7 +41,7 @@ func (g *CommitMessageGenerator) Generate(ctx context.Context, diff string, comm
 		if err == nil {
 			fmt.Printf("Successfully generated commit message: %s\n", message)
 			// Attempt to parse the JSON to ensure it's valid
-			var parsedMessage GeneratedCommitMessage
+			var parsedMessage templates.ConventionalCommit
 			if err := json.Unmarshal([]byte(message), &parsedMessage); err == nil {
 				fmt.Println("Successfully generated and parsed commit message")
 				return parsedMessage.String(), nil
