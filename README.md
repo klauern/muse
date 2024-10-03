@@ -28,7 +28,6 @@ Muse can be configured using a YAML file. The configuration file is typically lo
 
 ```yaml
 hook:
-  enabled: true
   type: default
   commit_style: conventional
   dry_run: false
@@ -43,7 +42,6 @@ llm:
 
 ### Configuration Options
 
-- `hook.enabled`: Enable or disable the Muse hook
 - `hook.type`: The type of hook to use (default, llm)
 - `hook.commit_style`: The style of commit messages to generate (conventional, gitmojis, default)
 - `hook.dry_run`: Run without actually committing
