@@ -26,7 +26,6 @@ func main() {
 			cmd.NewInstallCmd(cfg),
 			cmd.NewUninstallCmd(cfg),
 			cmd.NewConfigureCmd(cfg),
-			// cmd.NewGenerateCmd(cfg),
 			cmd.NewPrepareCommitMsgCmd(cfg),
 			{
 				Name:  "version",

@@ -91,7 +91,6 @@ func LoadConfig() (*Config, error) {
 
 // CreateConfig generates a template configuration file.
 func CreateConfig() error {
-	// Determine the configuration directory based on the XDG specification
 	configDir := os.Getenv("XDG_CONFIG_HOME")
 	if configDir == "" {
 		homeDir, err := os.UserHomeDir()
@@ -103,7 +102,6 @@ func CreateConfig() error {
 
 	configPath := filepath.Join(configDir, "muse", "muse.yaml")
 
-	// Create the directory if it doesn't exist
 	if err := os.MkdirAll(filepath.Dir(configPath), 0o755); err != nil {
 		return fmt.Errorf("failed to create config directory: %w", err)
 	}
