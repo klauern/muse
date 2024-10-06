@@ -2,6 +2,7 @@ package cmd
 
 import (
 	"fmt"
+	"log/slog"
 	"os"
 	"path/filepath"
 
@@ -23,6 +24,7 @@ func NewStatusCmd(config *config.Config) *cli.Command {
 func checkStatus(config *config.Config) error {
 	gitDir, err := hooks.FindGitDir()
 	if err != nil {
+		slog.Error("Failed to find .git directory", "error", err)
 		return fmt.Errorf("failed to find .git directory: %w", err)
 	}
 
@@ -36,6 +38,6 @@ func checkStatus(config *config.Config) error {
 
 	fmt.Printf("Hook configuration: DryRun=%t Type=%s\n", config.Hook.DryRun, config.Hook.Type)
 
-	fmt.Println("Status check completed")
+	slog.Debug("Status check completed")
 	return nil
 }
