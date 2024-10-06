@@ -10,6 +10,8 @@ import (
 	"github.com/klauern/muse/config"
 	"github.com/klauern/muse/llm"
 	"github.com/urfave/cli/v2"
+	"github.com/briandowns/spinner" // Add this import
+	"time" // Add this import
 )
 
 func NewPrepareCommitMsgCmd(cfg *config.Config) *cli.Command {
@@ -134,7 +136,17 @@ func generateCommitMessage(cfg *config.Config, diff string, verbose bool) (strin
 	slog.Debug("Commit message generator created successfully")
 	ctx := context.Background()
 	slog.Debug("Generating commit message", "diff_length", len(diff), "commit_style", cfg.Hook.CommitStyle)
+
+	// Create and start the spinner
+	s := spinner.New(spinner.CharSets[9], 100*time.Millisecond)
+	s.Suffix = " Generating commit message..."
+	s.Start()
+
 	message, err := generator.Generate(ctx, diff, cfg.Hook.CommitStyle)
+
+	// Stop the spinner
+	s.Stop()
+
 	if err != nil {
 		slog.Error("Failed to generate commit message", "error", err)
 		return "", fmt.Errorf("failed to generate commit message: %w", err)

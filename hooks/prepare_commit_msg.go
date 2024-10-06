@@ -33,6 +33,7 @@ func (h *LLMHook) Run(commitMsgFile string, commitSource string, sha1 string) er
 
 	// Generate the commit message
 	ctx := context.Background()
+	fmt.Println("Generating commit message")
 	message, err := h.Generator.Generate(ctx, diff, commitStyle)
 	if err != nil {
 		slog.Error("Failed to generate commit message", "error", err)
