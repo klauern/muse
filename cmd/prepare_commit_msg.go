@@ -6,12 +6,12 @@ import (
 	"log/slog"
 	"os"
 	"os/exec"
+	"time"
 
+	"github.com/briandowns/spinner"
 	"github.com/klauern/muse/config"
 	"github.com/klauern/muse/llm"
 	"github.com/urfave/cli/v2"
-	"github.com/briandowns/spinner" // Add this import
-	"time" // Add this import
 )
 
 func NewPrepareCommitMsgCmd(cfg *config.Config) *cli.Command {
@@ -29,19 +29,21 @@ func NewPrepareCommitMsgCmd(cfg *config.Config) *cli.Command {
 			},
 		},
 		Action: func(c *cli.Context) error {
+			if c.Bool("verbose") {
+				slog.SetDefault(slog.New(slog.NewJSONHandler(os.Stdout, &slog.HandlerOptions{Level: slog.LevelDebug})))
+			}
 			return runPrepareCommitMsg(c, cfg)
 		},
 	}
 }
 
 func runPrepareCommitMsg(c *cli.Context, cfg *config.Config) error {
-	verbose := c.Bool("verbose")
 	generateOnly := c.Bool("generate")
 
 	slog.Debug("Verbose mode enabled")
 
 	if generateOnly {
-		return generateAndPrintCommitMessage(cfg, verbose)
+		return generateAndPrintCommitMessage(cfg)
 	}
 
 	commitMsgFile, commitSource, err := parseArguments(c)
@@ -64,12 +66,12 @@ func runPrepareCommitMsg(c *cli.Context, cfg *config.Config) error {
 
 	slog.Debug("Git diff obtained", "length", len(diff))
 
-	message, err := generateCommitMessage(cfg, diff, verbose)
+	message, err := generateCommitMessage(cfg, diff)
 	if err != nil {
 		return err
 	}
 
-	if err := writeCommitMessage(commitMsgFile, message, verbose); err != nil {
+	if err := writeCommitMessage(commitMsgFile, message); err != nil {
 		return err
 	}
 
@@ -77,7 +79,7 @@ func runPrepareCommitMsg(c *cli.Context, cfg *config.Config) error {
 	return nil
 }
 
-func generateAndPrintCommitMessage(cfg *config.Config, verbose bool) error {
+func generateAndPrintCommitMessage(cfg *config.Config) error {
 	diff, err := getGitDiff()
 	if err != nil {
 		return fmt.Errorf("failed to get git diff: %w", err)
@@ -85,7 +87,7 @@ func generateAndPrintCommitMessage(cfg *config.Config, verbose bool) error {
 
 	slog.Debug("Git diff obtained", "length", len(diff))
 
-	message, err := generateCommitMessage(cfg, diff, verbose)
+	message, err := generateCommitMessage(cfg, diff)
 	if err != nil {
 		return err
 	}
@@ -125,7 +127,7 @@ func getGitDiff() (string, error) {
 	return string(output), nil
 }
 
-func generateCommitMessage(cfg *config.Config, diff string, verbose bool) (string, error) {
+func generateCommitMessage(cfg *config.Config, diff string) (string, error) {
 	slog.Debug("Starting commit message generation")
 	generator, err := llm.NewCommitMessageGenerator(cfg)
 	if err != nil {
@@ -156,7 +158,7 @@ func generateCommitMessage(cfg *config.Config, diff string, verbose bool) (strin
 	return message, nil
 }
 
-func writeCommitMessage(commitMsgFile, message string, verbose bool) error {
+func writeCommitMessage(commitMsgFile, message string) error {
 	if err := os.WriteFile(commitMsgFile, []byte(message), 0o644); err != nil {
 		slog.Error("Failed to write commit message", "error", err)
 		return fmt.Errorf("failed to write commit message: %w", err)
