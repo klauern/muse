@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"log/slog"
 	"os"
 
 	"github.com/klauern/muse/templates"
@@ -28,6 +29,7 @@ func (p *OpenAIProvider) NewService(cfg map[string]any) (LLMService, error) {
 		apiKey = os.Getenv("OPENAI_API_KEY")
 	}
 	if apiKey == "" {
+		slog.Error("OpenAI API key not set")
 		return nil, fmt.Errorf("openai api key not set")
 	}
 
@@ -43,6 +45,7 @@ func (s *OpenAIService) GenerateCommitMessage(ctx context.Context, diff string, 
 
 	commitTemplate, err := templateManager.CompileTemplate(style)
 	if err != nil {
+		slog.Error("Failed to compile template", "error", err)
 		return "", fmt.Errorf("failed to execute commit template: %w", err)
 	}
 
@@ -68,14 +71,16 @@ func (s *OpenAIService) GenerateCommitMessage(ctx context.Context, diff string, 
 		Model: openai.F(openai.ChatModelGPT4o2024_08_06),
 	})
 	if err != nil {
-		panic(err.Error())
+		slog.Error("Failed to create chat completion", "error", err)
+		return "", fmt.Errorf("failed to create chat completion: %w", err)
 	}
 
 	// The model responds with a JSON string, so parse it into a struct
 	conventionalCommit := templates.ConventionalCommit{}
 	err = json.Unmarshal([]byte(chat.Choices[0].Message.Content), &conventionalCommit)
 	if err != nil {
-		panic(err.Error())
+		slog.Error("Failed to unmarshal chat completion", "error", err)
+		return "", fmt.Errorf("failed to unmarshal chat completion: %w", err)
 	}
 	return conventionalCommit.String(), nil
 }

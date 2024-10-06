@@ -3,6 +3,7 @@ package llm
 import (
 	"context"
 	"fmt"
+	"log/slog"
 
 	"github.com/klauern/muse/config"
 	"github.com/klauern/muse/templates"
@@ -29,6 +30,7 @@ func RegisterProvider(name string, provider LLMProvider) {
 func NewLLMService(cfg *config.LLMConfig) (LLMService, error) {
 	provider, ok := providers[cfg.Provider]
 	if !ok {
+		slog.Error("Unsupported LLM provider", "provider", cfg.Provider)
 		return nil, fmt.Errorf("unsupported LLM provider: %s", cfg.Provider)
 	}
 

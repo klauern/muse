@@ -3,6 +3,7 @@ package templates
 import (
 	"bytes"
 	"fmt"
+	"log/slog"
 	"text/template"
 
 	"github.com/invopop/jsonschema"
@@ -79,6 +80,7 @@ The response should be a valid JSON object matching this schema:
 	createTemplate := func(name, typ, format, details, extra string, schema any) (CommitTemplate, error) {
 		tmpl, err := template.New(name).Parse(commonFormat)
 		if err != nil {
+			slog.Error("Failed to parse template", "error", err)
 			return CommitTemplate{}, err
 		}
 		// Pass dynamic data into the template
@@ -93,10 +95,12 @@ The response should be a valid JSON object matching this schema:
 		var buf bytes.Buffer
 		err = tmpl.Execute(&buf, data)
 		if err != nil {
+			slog.Error("Failed to execute template", "error", err)
 			return CommitTemplate{}, err
 		}
 		finalTemplate, err := template.New(name + "_final").Parse(buf.String())
 		if err != nil {
+			slog.Error("Failed to parse template", "error", err)
 			return CommitTemplate{}, err
 		}
 		return CommitTemplate{
@@ -147,6 +151,7 @@ The response should be a valid JSON object matching this schema:
 			GitmojiCommitSchema{},
 		)
 	default:
+		slog.Error("Unknown template type", "type", templateType)
 		return CommitTemplate{}, fmt.Errorf("unknown template type: %s", templateType)
 	}
 }

@@ -21,6 +21,7 @@ type CommitMessageGenerator struct {
 func NewCommitMessageGenerator(cfg *config.Config) (*CommitMessageGenerator, error) {
 	llmService, err := NewLLMService(&cfg.LLM)
 	if err != nil {
+		slog.Error("Failed to create LLM service", "error", err)
 		return nil, fmt.Errorf("failed to create LLM service: %w", err)
 	}
 
