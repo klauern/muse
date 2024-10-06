@@ -15,11 +15,15 @@ import (
 func NewPrepareCommitMsgCmd(cfg *config.Config) *cli.Command {
 	return &cli.Command{
 		Name:  "prepare-commit-msg",
-		Usage: "Run the prepare-commit-msg hook",
+		Usage: "Run the prepare-commit-msg hook or generate a commit message",
 		Flags: []cli.Flag{
 			&cli.BoolFlag{
 				Name:  "verbose",
 				Usage: "Enable verbose logging",
+			},
+			&cli.BoolFlag{
+				Name:  "generate",
+				Usage: "Generate and print a commit message without writing to a file",
 			},
 		},
 		Action: func(c *cli.Context) error {
@@ -30,8 +34,13 @@ func NewPrepareCommitMsgCmd(cfg *config.Config) *cli.Command {
 
 func runPrepareCommitMsg(c *cli.Context, cfg *config.Config) error {
 	verbose := c.Bool("verbose")
+	generateOnly := c.Bool("generate")
 
 	slog.Debug("Verbose mode enabled")
+
+	if generateOnly {
+		return generateAndPrintCommitMessage(cfg, verbose)
+	}
 
 	commitMsgFile, commitSource, err := parseArguments(c)
 	if err != nil {
@@ -66,6 +75,23 @@ func runPrepareCommitMsg(c *cli.Context, cfg *config.Config) error {
 	return nil
 }
 
+func generateAndPrintCommitMessage(cfg *config.Config, verbose bool) error {
+	diff, err := getGitDiff()
+	if err != nil {
+		return fmt.Errorf("failed to get git diff: %w", err)
+	}
+
+	slog.Debug("Git diff obtained", "length", len(diff))
+
+	message, err := generateCommitMessage(cfg, diff, verbose)
+	if err != nil {
+		return err
+	}
+
+	fmt.Println(message)
+	return nil
+}
+
 func parseArguments(c *cli.Context) (string, string, error) {
 	if c.NArg() < 1 {
 		return "", "", fmt.Errorf("missing commit message file argument")
@@ -85,11 +111,14 @@ func shouldSkipHook(commitSource string) bool {
 }
 
 func getGitDiff() (string, error) {
+	slog.Debug("Executing git diff command")
 	cmd := exec.Command("git", "diff", "--cached")
 	output, err := cmd.Output()
 	if err != nil {
+		slog.Error("Failed to execute git diff command", "error", err)
 		return "", err
 	}
+	slog.Debug("Git diff command executed successfully", "output_length", len(output))
 	return string(output), nil
 }
 
@@ -99,16 +128,11 @@ func generateCommitMessage(cfg *config.Config, diff string, verbose bool) (strin
 		return "", fmt.Errorf("failed to create commit message generator: %w", err)
 	}
 
-	slog.Debug("Commit message generator created")
-
 	ctx := context.Background()
 	message, err := generator.Generate(ctx, diff, cfg.Hook.CommitStyle)
 	if err != nil {
 		return "", fmt.Errorf("failed to generate commit message: %w", err)
 	}
-
-	slog.Debug("Commit message generated successfully")
-	slog.Debug("Generated message", "message", message)
 
 	return message, nil
 }

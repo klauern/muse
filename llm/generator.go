@@ -2,7 +2,6 @@ package llm
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
 	"time"
 
@@ -11,7 +10,7 @@ import (
 )
 
 type Generator interface {
-	Generate(ctx context.Context, diff string, commitStyle string) (string, error)
+	Generate(ctx context.Context, diff string, commitStyle templates.CommitStyle) (string, error)
 }
 
 type CommitMessageGenerator struct {
@@ -29,25 +28,17 @@ func NewCommitMessageGenerator(cfg *config.Config) (*CommitMessageGenerator, err
 	}, nil
 }
 
-func (g *CommitMessageGenerator) Generate(ctx context.Context, diff string, commitStyle string) (string, error) {
+func (g *CommitMessageGenerator) Generate(ctx context.Context, diff string, commitStyle templates.CommitStyle) (string, error) {
 	fmt.Println("Starting commit message generation")
-
-	style := GetCommitStyleFromString(commitStyle)
 
 	maxRetries := 3
 	for i := 0; i < maxRetries; i++ {
 		fmt.Printf("Attempt %d to generate commit message\n", i+1)
-		message, err := g.LLMService.GenerateCommitMessage(ctx, diff, style)
+		message, err := g.LLMService.GenerateCommitMessage(ctx, diff, commitStyle)
 		if err == nil {
 			fmt.Printf("Successfully generated commit message: %s\n", message)
 			// Attempt to parse the JSON to ensure it's valid
-			var parsedMessage templates.ConventionalCommit
-			if err := json.Unmarshal([]byte(message), &parsedMessage); err == nil {
-				fmt.Println("Successfully generated and parsed commit message")
-				return parsedMessage.String(), nil
-			} else {
-				fmt.Printf("Failed to parse commit message JSON: %v\n", err)
-			}
+			return message, nil
 		} else {
 			fmt.Printf("Failed to generate commit message: %v\n", err)
 		}

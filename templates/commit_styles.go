@@ -1,15 +1,18 @@
 package templates
 
 import (
+	"bytes"
 	"fmt"
 	"text/template"
 
 	"github.com/invopop/jsonschema"
 )
 
+type CommitStyle string
+
 const (
-	ConventionalCommitStyle = "conventional"
-	GitmojiCommitStyle      = "gitmoji"
+	ConventionalCommitStyle CommitStyle = "conventional"
+	GitmojiCommitStyle      CommitStyle = "gitmoji"
 )
 
 // CommitTemplate represents a template for generating commit messages
@@ -20,11 +23,11 @@ type CommitTemplate struct {
 
 // ConventionalCommit represents the structure of a conventional commit
 type ConventionalCommit struct {
-	Type    string `json:"type" jsonschema:"enum=feat,enum=fix,enum=chore,enum=docs,enum=style,enum=refactor,enum=test,enum=build,enum=ci,enum=perf,enum=revert,description=Type of commit following conventional commits"`
-	Scope   string `json:"scope,omitempty" jsonschema:"pattern=^[a-zA-Z0-9-_]+$,description=The area of the code affected by the commit,default="`
-	Subject string `json:"subject" jsonschema:"minLength=5,maxLength=72,description=A short summary of the change"`
-	Body    string `json:"body,omitempty" jsonschema:"description=A detailed description of the change"`
-	Footer  string `json:"footer,omitempty" jsonschema:"pattern=^(Closes|Fixes) #[0-9]+$,description=Any issue references or breaking change notes"`
+	Type    string `json:"type" jsonschema:"enum=feat,enum=fix,enum=chore,enum=docs,enum=style,enum=refactor,enum=test,enum=build,enum=ci,enum=perf,enum=revert" jsonschema_description:"Type of commit following conventional commits"`
+	Scope   string `json:"scope" jsonschema_description:"The area of the code affected by the commit"`
+	Subject string `json:"subject" jsonschema_description:"A short summary (5 to 72 characters) of the change"`
+	Body    string `json:"body" jsonschema_description:"A detailed description of the change"`
+	Footer  string `json:"footer" jsonschema_description:"Any issue references or breaking change notes, generally in the format of Closes-#123 or Fixes-#123"`
 }
 
 func (c *ConventionalCommit) String() string {
@@ -39,24 +42,32 @@ type GitmojiCommitSchema struct {
 
 // TemplateManager manages different commit templates
 type TemplateManager struct {
-	DefaultCommit      CommitTemplate
-	ConventionalCommit CommitTemplate
-	Gitmojis           CommitTemplate
+	diff  string
+	style CommitStyle
 }
 
 // NewTemplateManager creates and returns a new TemplateManager
-func NewTemplateManager() (*TemplateManager, error) {
-	commonFormat := `
-Generate a {{.Type}} commit message for the following git diff:
-{{.Diff}}
+func NewTemplateManager(diff string, style CommitStyle) *TemplateManager {
+	return &TemplateManager{
+		diff:  diff,
+		style: style,
+	}
+}
 
-{{if .Context}}Additional context:
-{{.Context}}
-{{end}}
+// CompileTemplate compiles a specific commit template at runtime
+func (tm *TemplateManager) CompileTemplate(templateType CommitStyle) (CommitTemplate, error) {
+	commonFormat := `
+Analyze the following git diff and generate a {{.Type}} commit message:
+
+'''
+{{.Diff}}
+'''
 
 The commit message should follow this format:
 {{.Format}}
+
 Where:
+
 {{.Details}}
 
 Please generate a commit message following this format{{.Extra}}.
@@ -70,64 +81,85 @@ The response should be a valid JSON object matching this schema:
 		if err != nil {
 			return CommitTemplate{}, err
 		}
+		// Pass dynamic data into the template
+		data := map[string]interface{}{
+			"Type":    typ,
+			"Diff":    tm.diff,
+			"Format":  format,
+			"Details": details,
+			"Extra":   extra,
+			"Schema":  schema,
+		}
+		var buf bytes.Buffer
+		err = tmpl.Execute(&buf, data)
+		if err != nil {
+			return CommitTemplate{}, err
+		}
+		finalTemplate, err := template.New(name + "_final").Parse(buf.String())
+		if err != nil {
+			return CommitTemplate{}, err
+		}
 		return CommitTemplate{
-			Template: tmpl.Option("missingkey=error"),
+			Template: finalTemplate,
 			Schema:   jsonschema.Reflect(schema),
 		}, nil
 	}
 
-	defaultCommit, err := createTemplate(
-		"default",
-		"",
-		"<type>(<scope>): <subject>\n\n<body>\n\n<footer>",
-		`- <type> is one of: feat, fix, docs, style, refactor, test, chore
+	switch templateType {
+	case "default":
+		return createTemplate(
+			"default",
+			"",
+			"<type>(<scope>): <subject>\n\n<body>\n\n<footer>",
+			`- <type> is one of: feat, fix, docs, style, refactor, test, chore
 - <scope> is optional and represents the module affected
 - <subject> is a short description in the present tense
 - <body> provides additional context (optional)
 - <footer> mentions any breaking changes or closed issues (optional)`,
-		"",
-		ConventionalCommit{},
-	)
-	if err != nil {
-		return nil, err
-	}
-
-	conventionalCommit, err := createTemplate(
-		"conventional",
-		"conventional",
-		"<type>[optional scope]: <description>\n\n[optional body]\n\n[optional footer(s)]",
-		`- <type> is one of: feat, fix, docs, style, refactor, test, chore, etc.
+			"",
+			ConventionalCommit{},
+		)
+	case "conventional":
+		return createTemplate(
+			"conventional",
+			"conventional",
+			"<type>[optional scope]: <description>\n\n[optional body]\n\n[optional footer(s)]",
+			`- <type> is one of: feat, fix, docs, style, refactor, test, chore, etc.
 - <scope> is optional and represents the module affected
 - <description> is a short summary in the present tense
 - <body> provides additional context (optional)
 - <footer> mentions any breaking changes or closed issues (optional)`,
-		"",
-		ConventionalCommit{},
-	)
-	if err != nil {
-		return nil, err
-	}
-
-	gitmojis, err := createTemplate(
-		"gitmojis",
-		"gitmoji",
-		"<gitmoji> <type>[optional scope]: <subject>\n\n<body>\n\n<footer>",
-		`- <gitmoji> is an appropriate emoji for the change (e.g., 🐛 for bug fixes, ✨ for new features)
+			"",
+			ConventionalCommit{},
+		)
+	case "gitmojis":
+		return createTemplate(
+			"gitmojis",
+			"gitmoji",
+			"<gitmoji> <type>[optional scope]: <subject>\n\n<body>\n\n<footer>",
+			`- <gitmoji> is an appropriate emoji for the change (e.g., 🐛 for bug fixes, ✨ for new features)
 - <type> is one of: feat (✨), fix (🐛), docs (📝), style (💄), refactor (♻️), test (✅), chore (🔧)
 - <scope> is optional and represents the module affected
 - <subject> is a short description in the present tense
 - <body> provides additional context (optional)
 - <footer> mentions any breaking changes or closed issues (optional)`,
-		", choosing an appropriate gitmoji",
-		GitmojiCommitSchema{},
-	)
-	if err != nil {
-		return nil, err
+			", choosing an appropriate gitmoji",
+			GitmojiCommitSchema{},
+		)
+	default:
+		return CommitTemplate{}, fmt.Errorf("unknown template type: %s", templateType)
 	}
+}
 
-	return &TemplateManager{
-		DefaultCommit:      defaultCommit,
-		ConventionalCommit: conventionalCommit,
-		Gitmojis:           gitmojis,
-	}, nil
+var CommitStyleTemplateSchema = GenerateSchema[ConventionalCommit]()
+
+// GenerateSchema generates a JSON schema for a given type, adhering to the subset of JSON Schema supported by OpenAI's structured outputs.
+func GenerateSchema[T any]() any {
+	reflector := jsonschema.Reflector{
+		AllowAdditionalProperties: false,
+		DoNotReference:            true,
+	}
+	var v T
+	schema := reflector.Reflect(v)
+	return schema
 }

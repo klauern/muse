@@ -1,13 +1,14 @@
 package llm
 
 import (
-	"bytes"
 	"context"
+	"encoding/json"
 	"fmt"
 	"os"
 
-	"github.com/klauern/muse/api"
 	"github.com/klauern/muse/templates"
+	"github.com/openai/openai-go"
+	"github.com/openai/openai-go/option"
 )
 
 type OpenAIProvider struct{}
@@ -17,90 +18,64 @@ func init() {
 }
 
 type OpenAIService struct {
-	client *api.Client
+	client *openai.Client
 	model  string
 }
 
-func (p *OpenAIProvider) NewService(cfg map[string]interface{}) (LLMService, error) {
-	apiKey := os.Getenv("OPENAI_API_KEY")
+func (p *OpenAIProvider) NewService(cfg map[string]any) (LLMService, error) {
+	apiKey, ok := cfg["api_key"].(string)
+	if !ok {
+		apiKey = os.Getenv("OPENAI_API_KEY")
+	}
 	if apiKey == "" {
-		return nil, fmt.Errorf("OPENAI_API_KEY environment variable is not set")
+		return nil, fmt.Errorf("openai api key not set")
 	}
 
-	client := api.NewClient(apiKey)
-	model := "gpt-3.5-turbo" // Default model, can be configurable
+	client := openai.NewClient(option.WithAPIKey(apiKey))
+
+	model := "gpt-4o" // Default model, can be configurable
 
 	return &OpenAIService{client: client, model: model}, nil
 }
 
-func (s *OpenAIService) GenerateCommitMessage(ctx context.Context, diff string, style CommitStyle) (string, error) {
-	templateManager, err := templates.NewTemplateManager()
-	if err != nil {
-		return "", fmt.Errorf("failed to create template manager: %w", err)
-	}
-	style = GetCommitStyleFromString(style.String())
+func (s *OpenAIService) GenerateCommitMessage(ctx context.Context, diff string, style templates.CommitStyle) (string, error) {
+	templateManager := templates.NewTemplateManager(diff, style)
 
-	var commitTemplate templates.CommitTemplate
-	switch style {
-	case ConventionalStyle:
-		commitTemplate = templateManager.ConventionalCommit
-	case GitmojisStyle:
-		commitTemplate = templateManager.Gitmojis
-	default:
-		commitTemplate = templateManager.DefaultCommit
-	}
-
-	var promptBuffer bytes.Buffer
-	err = commitTemplate.Template.Execute(&promptBuffer, map[string]interface{}{
-		"Type": style.String(),
-		"Diff": diff,
-		"Format": func() []string {
-			if prop, ok := commitTemplate.Schema.Definitions["ConventionalCommit"].Properties.Get("type"); ok {
-				enumValues := make([]string, len(prop.Enum))
-				for i, v := range prop.Enum {
-					enumValues[i] = v.(string)
-				}
-				return enumValues
-			}
-			return nil
-		}(),
-	})
+	commitTemplate, err := templateManager.CompileTemplate(style)
 	if err != nil {
 		return "", fmt.Errorf("failed to execute commit template: %w", err)
 	}
 
-	req, err := s.client.NewRequest("POST", "/chat/completions", map[string]interface{}{
-		"model": s.model,
-		"messages": []map[string]string{
-			{
-				"role":    "system",
-				"content": "You are a helpful assistant that generates commit messages.",
+	schemaParam := openai.ResponseFormatJSONSchemaJSONSchemaParam{
+		Name:        openai.F("CommitDiffInstructions"),
+		Description: openai.F("Commit instructions for the diff"),
+		Strict:      openai.Bool(true),
+		Schema:      openai.F(templates.CommitStyleTemplateSchema),
+	}
+
+	// Query the Chat Completions API
+	chat, err := s.client.Chat.Completions.New(ctx, openai.ChatCompletionNewParams{
+		Messages: openai.F([]openai.ChatCompletionMessageParamUnion{
+			openai.UserMessage(commitTemplate.Template.Root.String()),
+		}),
+		ResponseFormat: openai.F[openai.ChatCompletionNewParamsResponseFormatUnion](
+			openai.ResponseFormatJSONSchemaParam{
+				Type:       openai.F(openai.ResponseFormatJSONSchemaTypeJSONSchema),
+				JSONSchema: openai.F(schemaParam),
 			},
-			{
-				"role":    "user",
-				"content": promptBuffer.String(),
-			},
-		},
+		),
+		// Only certain models can perform structured outputs
+		Model: openai.F(openai.ChatModelGPT4o2024_08_06),
 	})
 	if err != nil {
-		return "", fmt.Errorf("failed to create request: %w", err)
+		panic(err.Error())
 	}
 
-	var response struct {
-		Choices []struct {
-			Message struct {
-				Content string `json:"content"`
-			} `json:"message"`
-		} `json:"choices"`
+	// The model responds with a JSON string, so parse it into a struct
+	conventionalCommit := templates.ConventionalCommit{}
+	err = json.Unmarshal([]byte(chat.Choices[0].Message.Content), &conventionalCommit)
+	if err != nil {
+		panic(err.Error())
 	}
-
-	if err := s.client.Do(req, &response); err != nil {
-		return "", fmt.Errorf("failed to generate commit message: %w", err)
-	}
-
-	if len(response.Choices) == 0 {
-		return "", fmt.Errorf("no commit message generated")
-	}
-
-	return response.Choices[0].Message.Content, nil
+	return conventionalCommit.String(), nil
 }

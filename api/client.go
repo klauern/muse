@@ -18,7 +18,7 @@ func NewClient(token string) *Client {
 }
 
 // NewRequest creates a new authenticated HTTP request.
-func (c *Client) NewRequest(method, path string, body interface{}) (*http.Request, error) {
+func (c *Client) NewRequest(method, path string, body any) (*http.Request, error) {
 	req, err := http.NewRequest(method, c.BaseURL+path, nil)
 	if err != nil {
 		return nil, err
@@ -31,7 +31,7 @@ func (c *Client) NewRequest(method, path string, body interface{}) (*http.Reques
 }
 
 // Do sends an HTTP request and decodes the response.
-func (c *Client) Do(req *http.Request, v interface{}) error {
+func (c *Client) Do(req *http.Request, v any) error {
 	resp, err := c.HTTPClient.Do(req)
 	if err != nil {
 		return err

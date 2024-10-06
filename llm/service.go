@@ -3,35 +3,14 @@ package llm
 import (
 	"context"
 	"fmt"
-	"strings"
 
 	"github.com/klauern/muse/config"
 	"github.com/klauern/muse/templates"
 )
 
-// CommitStyle represents different commit message styles
-type CommitStyle int
-
-const (
-	DefaultStyle CommitStyle = iota
-	ConventionalStyle
-	GitmojisStyle
-)
-
-func (cs CommitStyle) String() string {
-	switch cs {
-	case ConventionalStyle:
-		return "conventional"
-	case GitmojisStyle:
-		return "gitmojis"
-	default:
-		return "default"
-	}
-}
-
 // LLMService defines the interface for LLM providers
 type LLMService interface {
-	GenerateCommitMessage(ctx context.Context, diff string, style CommitStyle) (string, error)
+	GenerateCommitMessage(ctx context.Context, diff string, style templates.CommitStyle) (string, error)
 }
 
 // LLMProvider defines the interface for creating LLM services
@@ -53,33 +32,17 @@ func NewLLMService(cfg *config.LLMConfig) (LLMService, error) {
 		return nil, fmt.Errorf("unsupported LLM provider: %s", cfg.Provider)
 	}
 
-	if cfg.Provider == "ollama" {
-		return provider.NewService(cfg.Config)
-	}
-
 	return provider.NewService(cfg.Config)
 }
 
-// GetCommitTemplate returns the appropriate template based on the commit style
-func GetCommitTemplate(style CommitStyle, tm *templates.TemplateManager) templates.CommitTemplate {
-	switch style {
-	case ConventionalStyle:
-		return tm.ConventionalCommit
-	case GitmojisStyle:
-		return tm.Gitmojis
-	default:
-		return tm.DefaultCommit
-	}
-}
-
-// GetCommitStyleFromString converts a string representation of commit style to CommitStyle enum
-func GetCommitStyleFromString(style string) CommitStyle {
-	switch strings.ToLower(style) {
-	case "conventional":
-		return ConventionalStyle
-	case "gitmojis":
-		return GitmojisStyle
-	default:
-		return DefaultStyle
-	}
-}
+// // GetCommitTemplate returns the appropriate template based on the commit style
+// func GetCommitTemplate(style templates.CommitStyle, tm *templates.TemplateManager) templates.CommitTemplate {
+// 	switch style {
+// 	case templates.ConventionalCommitStyle:
+// 		return tm.ConventionalCommit
+// 	case templates.GitmojiCommitStyle:
+// 		return tm.Gitmojis
+// 	default:
+// 		return tm.DefaultCommit
+// 	}
+// }
