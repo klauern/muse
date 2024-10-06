@@ -88,7 +88,8 @@ func generateAndPrintCommitMessage(cfg *config.Config, verbose bool) error {
 		return err
 	}
 
-	fmt.Println(message)
+	slog.Info("Generated commit message", "message", message)
+
 	return nil
 }
 
@@ -123,22 +124,29 @@ func getGitDiff() (string, error) {
 }
 
 func generateCommitMessage(cfg *config.Config, diff string, verbose bool) (string, error) {
+	slog.Debug("Starting commit message generation")
 	generator, err := llm.NewCommitMessageGenerator(cfg)
 	if err != nil {
+		slog.Error("Failed to create commit message generator", "error", err)
 		return "", fmt.Errorf("failed to create commit message generator: %w", err)
 	}
 
+	slog.Debug("Commit message generator created successfully")
 	ctx := context.Background()
+	slog.Debug("Generating commit message", "diff_length", len(diff), "commit_style", cfg.Hook.CommitStyle)
 	message, err := generator.Generate(ctx, diff, cfg.Hook.CommitStyle)
 	if err != nil {
+		slog.Error("Failed to generate commit message", "error", err)
 		return "", fmt.Errorf("failed to generate commit message: %w", err)
 	}
 
+	slog.Debug("Commit message generated successfully", "message_length", len(message))
 	return message, nil
 }
 
 func writeCommitMessage(commitMsgFile, message string, verbose bool) error {
 	if err := os.WriteFile(commitMsgFile, []byte(message), 0o644); err != nil {
+		slog.Error("Failed to write commit message", "error", err)
 		return fmt.Errorf("failed to write commit message: %w", err)
 	}
 

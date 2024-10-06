@@ -3,6 +3,7 @@ package llm
 import (
 	"context"
 	"fmt"
+	"log/slog"
 	"time"
 
 	"github.com/klauern/muse/config"
@@ -29,22 +30,22 @@ func NewCommitMessageGenerator(cfg *config.Config) (*CommitMessageGenerator, err
 }
 
 func (g *CommitMessageGenerator) Generate(ctx context.Context, diff string, commitStyle templates.CommitStyle) (string, error) {
-	fmt.Println("Starting commit message generation")
+	slog.Debug("Generating commit message")
 
 	maxRetries := 3
 	for i := 0; i < maxRetries; i++ {
-		fmt.Printf("Attempt %d to generate commit message\n", i+1)
+		slog.Debug("Attempting to generate commit message", "attempt", i+1)
 		message, err := g.LLMService.GenerateCommitMessage(ctx, diff, commitStyle)
 		if err == nil {
-			fmt.Printf("Successfully generated commit message: %s\n", message)
+			slog.Debug("Successfully generated commit message", "message", message)
 			// Attempt to parse the JSON to ensure it's valid
 			return message, nil
 		} else {
-			fmt.Printf("Failed to generate commit message: %v\n", err)
+			slog.Error("Failed to generate commit message", "error", err)
 		}
 
 		if i == maxRetries-1 {
-			fmt.Printf("Failed to generate valid commit message after %d attempts\n", maxRetries)
+			slog.Error("Failed to generate valid commit message after %d attempts", "attempts", maxRetries)
 			return "", fmt.Errorf("failed to generate valid commit message after %d attempts: %w", maxRetries, err)
 		}
 
@@ -52,6 +53,6 @@ func (g *CommitMessageGenerator) Generate(ctx context.Context, diff string, comm
 		time.Sleep(time.Second * time.Duration(i+1))
 	}
 
-	fmt.Println("Unexpected error: should not reach this point")
+	slog.Error("Unexpected error: should not reach this point")
 	return "", fmt.Errorf("unexpected error: should not reach this point")
 }

@@ -2,6 +2,7 @@ package hooks
 
 import (
 	"fmt"
+	"log/slog"
 	"os"
 	"path/filepath"
 	"regexp"
@@ -110,6 +111,7 @@ func getExecutableInfo() (string, string, string, error) {
 func (i *Installer) Install() error {
 	gitDir, err := FindGitDir()
 	if err != nil {
+		slog.Error("Failed to find .git directory", "error", err)
 		return fmt.Errorf("failed to find .git directory: %w", err)
 	}
 
@@ -117,13 +119,15 @@ func (i *Installer) Install() error {
 
 	_, binaryPath, binaryName, err := getExecutableInfo()
 	if err != nil {
-		return err
+		slog.Error("Failed to get executable info", "error", err)
+		return fmt.Errorf("failed to get executable info: %w", err)
 	}
 
 	hookContent := generateHookScript(binaryPath, binaryName)
 
 	fmt.Printf("Installing prepare-commit-msg hook... at %s\n", hookPath)
 	if err := addOrUpdateHookContent(hookPath, hookContent); err != nil {
+		slog.Error("Failed to add or update hook content", "error", err)
 		return fmt.Errorf("failed to add or update hook content: %w", err)
 	}
 
@@ -134,6 +138,7 @@ func (i *Installer) Install() error {
 func (i *Installer) Uninstall() error {
 	gitDir, err := FindGitDir()
 	if err != nil {
+		slog.Error("Failed to find .git directory", "error", err)
 		return fmt.Errorf("failed to find .git directory: %w", err)
 	}
 
@@ -141,12 +146,14 @@ func (i *Installer) Uninstall() error {
 
 	if _, err := os.Stat(hookPath); err == nil {
 		if err := os.Remove(hookPath); err != nil {
+			slog.Error("Failed to remove hook", "error", err)
 			return fmt.Errorf("failed to remove hook: %w", err)
 		}
 		fmt.Println("prepare-commit-msg hook uninstalled successfully")
 	} else if os.IsNotExist(err) {
-		fmt.Println("prepare-commit-msg hook does not exist")
+		slog.Info("prepare-commit-msg hook does not exist")
 	} else {
+		slog.Error("Failed to check hook existence", "error", err)
 		return fmt.Errorf("failed to check hook existence: %w", err)
 	}
 
