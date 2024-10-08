@@ -26,6 +26,7 @@ type OpenAIService struct {
 func (p *OpenAIProvider) NewService(cfg map[string]any) (LLMService, error) {
 	apiKey, ok := cfg["api_key"].(string)
 	if !ok {
+		slog.Warn("No OpenAI API key specified, using environment variable")
 		apiKey = os.Getenv("OPENAI_API_KEY")
 	}
 	if apiKey == "" {
@@ -35,7 +36,11 @@ func (p *OpenAIProvider) NewService(cfg map[string]any) (LLMService, error) {
 
 	client := openai.NewClient(option.WithAPIKey(apiKey))
 
-	model := "gpt-4o" // Default model, can be configurable
+	model, ok := cfg["model"].(string)
+	if !ok {
+		slog.Warn("No model specified, using default gpt-4o")
+		model = "gpt-4o"
+	}
 
 	return &OpenAIService{client: client, model: model}, nil
 }

@@ -37,6 +37,7 @@ type Hook struct {
 
 // LoadConfig loads the configuration from YAML and environment variables
 func LoadConfig() (*Config, error) {
+	slog.Debug("Loading config")
 	k := koanf.New(".")
 
 	// Define the list of config file paths to check
@@ -72,6 +73,7 @@ func LoadConfig() (*Config, error) {
 	// Unmarshal into the struct
 	var config Config
 	if err := k.Unmarshal("", &config); err != nil {
+		slog.Error("error unmarshaling config; continuing", "error", err)
 		return nil, fmt.Errorf("error unmarshaling config: %v", err)
 	}
 

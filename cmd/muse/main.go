@@ -2,7 +2,7 @@ package main
 
 import (
 	"fmt"
-	"log"
+	"log/slog"
 	"os"
 
 	"github.com/klauern/muse/cmd"
@@ -11,11 +11,7 @@ import (
 )
 
 func main() {
-	cfg, err := config.LoadConfig()
-	if err != nil {
-		fmt.Printf("Error loading config: %v\n", err)
-		os.Exit(1)
-	}
+	var cfg *config.Config
 
 	app := &cli.App{
 		Name:    "muse",
@@ -36,10 +32,24 @@ func main() {
 				},
 			},
 		},
+		Before: func(c *cli.Context) error {
+			if c.Bool("verbose") {
+				slog.SetDefault(slog.New(slog.NewJSONHandler(os.Stdout, &slog.HandlerOptions{Level: slog.LevelDebug})))
+			}
+
+			var err error
+			cfg, err = config.LoadConfig()
+			if err != nil {
+				fmt.Printf("Error loading config: %v\n", err)
+				os.Exit(1)
+			}
+			return nil
+		},
 	}
 
-	err = app.Run(os.Args)
+	err := app.Run(os.Args)
 	if err != nil {
-		log.Fatal(err)
+		slog.Error("Error running app", "error", err)
+		os.Exit(1)
 	}
 }

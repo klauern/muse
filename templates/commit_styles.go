@@ -2,6 +2,7 @@ package templates
 
 import (
 	"bytes"
+	"embed"
 	"fmt"
 	"log/slog"
 	"text/template"
@@ -10,6 +11,9 @@ import (
 )
 
 type CommitStyle string
+
+//go:embed styles/*.tmpl
+var styles embed.FS
 
 const (
 	ConventionalCommitStyle CommitStyle = "conventional"
