@@ -28,6 +28,11 @@ func addOrUpdateHookContent(hookPath, hookContent string) error {
 	var existingContent []byte
 	var err error
 
+	// create the directory if it doesn't exist
+	if err := os.MkdirAll(filepath.Dir(hookPath), 0o755); err != nil {
+		return fmt.Errorf("failed to create directory: %w", err)
+	}
+
 	// Check if the hook file exists
 	if _, err := os.Stat(hookPath); os.IsNotExist(err) {
 		// Case 2: File doesn't exist, create it with shebang and hook content

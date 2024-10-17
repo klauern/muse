@@ -10,8 +10,20 @@ import (
 	"github.com/urfave/cli/v2"
 )
 
+func loadConfig() (*config.Config, error) {
+	cfg, err := config.LoadConfig()
+	if err != nil {
+		return nil, fmt.Errorf("error loading config: %v", err)
+	}
+	return cfg, nil
+}
+
 func main() {
-	var cfg *config.Config
+	cfg, err := loadConfig()
+	if err != nil {
+		fmt.Printf("Error loading config: %v\n", err)
+		os.Exit(1)
+	}
 
 	app := &cli.App{
 		Name:    "muse",
@@ -36,20 +48,12 @@ func main() {
 			if c.Bool("verbose") {
 				slog.SetDefault(slog.New(slog.NewJSONHandler(os.Stdout, &slog.HandlerOptions{Level: slog.LevelDebug})))
 			}
-
-			var err error
-			cfg, err = config.LoadConfig()
-			if err != nil {
-				fmt.Printf("Error loading config: %v\n", err)
-				os.Exit(1)
-			}
 			return nil
 		},
 	}
 
-	err := app.Run(os.Args)
-	if err != nil {
-		slog.Error("Error running app", "error", err)
+	if err := app.Run(os.Args); err != nil {
+		fmt.Printf("Error: %v\n", err)
 		os.Exit(1)
 	}
 }
