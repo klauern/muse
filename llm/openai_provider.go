@@ -12,6 +12,11 @@ import (
 	"github.com/openai/openai-go/option"
 )
 
+// OpenAIServiceInterface defines the interface for the OpenAI service
+type OpenAIServiceInterface interface {
+	GenerateCommitMessage(ctx context.Context, diff string, style templates.CommitStyle) (string, error)
+}
+
 type OpenAIProvider struct{}
 
 func init() {
@@ -89,3 +94,5 @@ func (s *OpenAIService) GenerateCommitMessage(ctx context.Context, diff string, 
 	}
 	return conventionalCommit.String(), nil
 }
+
+//go:generate mockgen -destination=mocks/mock_openai_service.go -package=mocks github.com/klauern/muse/llm OpenAIServiceInterface

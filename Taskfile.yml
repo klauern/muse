@@ -125,6 +125,24 @@ tasks:
     cmds:
       - go test -v -coverprofile=coverage.out
 
+  test:llm:integration:
+    desc: "Run integration tests for llm package"
+    dir: llm
+    cmds:
+      - go test -v -tags=integration -coverprofile=coverage.out
+
+  test:llm:unit:
+    desc: "Run unit tests for llm package"
+    dir: llm
+    cmds:
+      - go test -v -coverprofile=coverage.out
+
+  test:llm:integration:openai:
+    desc: "Run OpenAI integration tests"
+    dir: llm
+    cmds:
+      - go test -v -tags=integration -run TestOpenAIService
+
   deps:
     desc: "Ensure gofumpt is installed"
     cmds:
