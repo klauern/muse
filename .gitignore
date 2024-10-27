@@ -5,3 +5,6 @@ dist/
 /.task/
 
 coverage.*
+
+coverage.txt
+coverage.html
