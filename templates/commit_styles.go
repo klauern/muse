@@ -2,7 +2,6 @@ package templates
 
 import (
 	"bytes"
-	"embed"
 	"fmt"
 	"log/slog"
 	"text/template"
@@ -11,9 +10,6 @@ import (
 )
 
 type CommitStyle string
-
-//go:embed styles/*.tmpl
-var styles embed.FS
 
 const (
 	ConventionalCommitStyle CommitStyle = "conventional"
@@ -29,7 +25,7 @@ type CommitTemplate struct {
 // ConventionalCommit represents the structure of a conventional commit
 type ConventionalCommit struct {
 	Type    string `json:"type" jsonschema:"enum=feat,enum=fix,enum=chore,enum=docs,enum=style,enum=refactor,enum=test,enum=build,enum=ci,enum=perf,enum=revert" jsonschema_description:"Type of commit following conventional commits"`
-	Scope   string `json:"scope" jsonschema_description:"The area of the code affected by the commit"`
+	Scope   string `json:"scope" jsonschema_description:"The area/section of the code affected by the commit.  Usually short (tests, deps, ci, etc)"`
 	Subject string `json:"subject" jsonschema_description:"A short summary (5 to 72 characters) of the change"`
 	Body    string `json:"body" jsonschema_description:"A detailed description of the change"`
 	Footer  string `json:"footer" jsonschema_description:"Any issue references or breaking change notes, generally in the format of Closes-#123 or Fixes-#123"`

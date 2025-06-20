@@ -1,0 +1,15 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(ls:*)",
+      "Bash(/Users/nklauer/go/bin/muse --help)",
+      "Bash(find:*)",
+      "WebFetch(domain:platform.openai.com)",
+      "WebFetch(domain:zapier.com)",
+      "Bash(muse prepare-commit-msg:*)",
+      "mcp__sequential-thinking__sequentialthinking",
+      "Bash(go build:*)"
+    ],
+    "deny": []
+  }
+}
