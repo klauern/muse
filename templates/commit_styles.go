@@ -57,6 +57,12 @@ func NewTemplateManager(diff string, style CommitStyle) *TemplateManager {
 
 // CompileTemplate compiles a specific commit template at runtime
 func (tm *TemplateManager) CompileTemplate(templateType CommitStyle) (CommitTemplate, error) {
+	// Create a template with function map
+	funcMap := template.FuncMap{
+		// Add any functions you need here
+		"secrets": func() string { return "" }, // Or implement proper secrets handling
+	}
+
 	commonFormat := `
 Analyze the following git diff and generate a {{.Type}} commit message:
 
@@ -78,7 +84,8 @@ The response should be a valid JSON object matching this schema:
 `
 
 	createTemplate := func(name, typ, format, details, extra string, schema any) (CommitTemplate, error) {
-		tmpl, err := template.New(name).Parse(commonFormat)
+		// Create template with function map
+		tmpl, err := template.New(name).Funcs(funcMap).Parse(commonFormat)
 		if err != nil {
 			slog.Error("Failed to parse template", "error", err)
 			return CommitTemplate{}, err
@@ -98,15 +105,16 @@ The response should be a valid JSON object matching this schema:
 			slog.Error("Failed to execute template", "error", err)
 			return CommitTemplate{}, err
 		}
-		finalTemplate, err := template.New(name + "_final").Parse(buf.String())
+		// Create final template with function map as well
+		finalTemplate, err := template.New(name + "_final").Funcs(funcMap).Parse(buf.String())
 		if err != nil {
 			slog.Error("Failed to parse template", "error", err)
 			return CommitTemplate{}, err
 		}
 		return CommitTemplate{
-			Template: finalTemplate,
-			Schema:   jsonschema.Reflect(schema),
-		}, nil
+				Template: finalTemplate,
+				Schema:   jsonschema.Reflect(schema),
+			}, nil
 	}
 
 	switch templateType {

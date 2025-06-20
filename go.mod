@@ -6,8 +6,8 @@ require (
 	github.com/briandowns/spinner v1.23.1
 	github.com/invopop/jsonschema v0.12.0
 	github.com/knadh/koanf v1.5.0
-	github.com/openai/openai-go v0.1.0-alpha.25
-	github.com/urfave/cli/v2 v2.27.4
+	github.com/openai/openai-go v0.1.0-alpha.31
+	github.com/urfave/cli/v2 v2.27.5
 )
 
 require (
@@ -15,7 +15,7 @@ require (
 	github.com/buger/jsonparser v1.1.1 // indirect
 	github.com/cpuguy83/go-md2man/v2 v2.0.5 // indirect
 	github.com/davecgh/go-spew v1.1.2-0.20180830191138-d8f796af33cc // indirect
-	github.com/fatih/color v1.17.0 // indirect
+	github.com/fatih/color v1.18.0 // indirect
 	github.com/fsnotify/fsnotify v1.7.0 // indirect
 	github.com/kr/pretty v0.3.1 // indirect
 	github.com/mailru/easyjson v0.7.7 // indirect
