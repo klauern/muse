@@ -102,16 +102,17 @@ func (s *OpenAIService) GenerateCommitMessage(ctx context.Context, diff string, 
 }
 
 // supportsStructuredOutputs checks if the current model supports structured outputs
+var structuredOutputModels = map[string]bool{
+	"gpt-4o-2024-08-06":      true,
+	"gpt-4o-mini-2024-07-18": true,
+	"gpt-4o-2024-11-20":      true,
+	"gpt-4o-mini":            true,
+	"gpt-4o":                 true,
+	// Disabled gpt-4.1 structured outputs due to API gateway compatibility issues
+	// "gpt-4.1":                true,
+}
+
 func (s *OpenAIService) supportsStructuredOutputs() bool {
-	structuredOutputModels := map[string]bool{
-		"gpt-4o-2024-08-06":      true,
-		"gpt-4o-mini-2024-07-18": true,
-		"gpt-4o-2024-11-20":      true,
-		"gpt-4o-mini":            true,
-		"gpt-4o":                 true,
-		// Disabled gpt-4.1 structured outputs due to API gateway compatibility issues
-		// "gpt-4.1":                true,
-	}
 	return structuredOutputModels[s.model]
 }
 
