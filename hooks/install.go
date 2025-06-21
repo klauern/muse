@@ -63,7 +63,6 @@ func addOrUpdateHookContent(hookPath, hookContent string) error {
 	return os.WriteFile(hookPath, []byte(updatedContent), 0o755)
 }
 
-
 func generateHookScript(binaryPath, binaryName string) string {
 	return fmt.Sprintf(`%s
 # Save the original arguments
