@@ -21,15 +21,16 @@ llm:
   # Options: "openai", "anthropic", etc.
   provider: "openai"
 
-  # OpenAI specific configuration
-  model: "gpt-3.5-turbo"
+  # Provider-specific configuration
+  config:
+    # OpenAI specific configuration
+    model: "gpt-4o"
+    api_key: "sk-proj-xxxx"
+    api_base: "https://api.openai.com/v1"
 
-  # API key for the LLM provider
-  api_key: "sk-proj-xxxx"
+    # Anthropic specific configuration (uncomment and modify as needed)
+    # model: "claude-v1"
+    # max_tokens_to_sample: 300
 
-  # Anthropic specific configuration (uncomment and modify as needed)
-  # model: "claude-v1"
-  # max_tokens_to_sample: 300
-
-  # Add other provider-specific configurations as needed
+    # Add other provider-specific configurations as needed
 # Add any other global configurations here

@@ -13,6 +13,7 @@ import (
 	"github.com/knadh/koanf/parsers/yaml"
 	"github.com/knadh/koanf/providers/env"
 	"github.com/knadh/koanf/providers/file"
+	"github.com/knadh/koanf/providers/rawbytes"
 )
 
 //go:embed example_config.yaml
@@ -60,12 +61,15 @@ func LoadConfig() (*Config, error) {
 	}
 
 	if !found {
-		return nil, fmt.Errorf("no config file found in any of the paths: %v", configPaths)
+		// Use example config
+		if err := k.Load(rawbytes.Provider(ExampleConfig), yaml.Parser()); err != nil {
+			return nil, fmt.Errorf("error loading example config: %v", err)
+		}
 	}
 
 	// Load environment variables, with "MUSE_" prefix (ignores case)
 	if err := k.Load(env.Provider("MUSE_", ".", func(s string) string {
-		return strings.Replace(strings.ToLower(s), "_", ".", -1)
+		return strings.ReplaceAll(strings.ToLower(s), "_", ".")
 	}), nil); err != nil {
 		slog.Error("error loading environment variables; continuing", "error", err)
 	}
