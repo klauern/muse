@@ -101,7 +101,7 @@ func (s *OpenAIService) GenerateCommitMessage(ctx context.Context, diff string, 
 	return s.generateWithRegularCompletion(ctx, commitTemplate)
 }
 
-// supportsStructuredOutputs checks if the current model supports structured outputs
+// structuredOutputModels defines which models support structured outputs
 var structuredOutputModels = map[string]bool{
 	"gpt-4o-2024-08-06":      true,
 	"gpt-4o-mini-2024-07-18": true,
@@ -112,6 +112,7 @@ var structuredOutputModels = map[string]bool{
 	// "gpt-4.1":                true,
 }
 
+// supportsStructuredOutputs checks if the current model supports structured outputs
 func (s *OpenAIService) supportsStructuredOutputs() bool {
 	return structuredOutputModels[s.model]
 }
@@ -251,7 +252,11 @@ Respond with ONLY the commit message, no additional text or formatting.`,
 	if err != nil {
 		return "", fmt.Errorf("HTTP request failed: %w", err)
 	}
-	defer resp.Body.Close()
+	defer func() {
+		if err := resp.Body.Close(); err != nil {
+			slog.Warn("Failed to close response body", "error", err)
+		}
+	}()
 
 	// Read the response body
 	bodyBytes, err := io.ReadAll(resp.Body)

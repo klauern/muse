@@ -69,7 +69,7 @@ func LoadConfig() (*Config, error) {
 
 	// Load environment variables, with "MUSE_" prefix (ignores case)
 	if err := k.Load(env.Provider("MUSE_", ".", func(s string) string {
-		return strings.Replace(strings.ToLower(s), "_", ".", -1)
+		return strings.ReplaceAll(strings.ToLower(s), "_", ".")
 	}), nil); err != nil {
 		slog.Error("error loading environment variables; continuing", "error", err)
 	}

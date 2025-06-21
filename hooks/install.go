@@ -63,24 +63,6 @@ func addOrUpdateHookContent(hookPath, hookContent string) error {
 	return os.WriteFile(hookPath, []byte(updatedContent), 0o755)
 }
 
-func removeHookContent(hookPath string) error {
-	// Read existing hook file content
-	existingContent, err := os.ReadFile(hookPath)
-	if err != nil {
-		return fmt.Errorf("failed to read hook file: %w", err)
-	}
-
-	// Remove content between markers
-	re := regexp.MustCompile(fmt.Sprintf("(?s)%s.*?%s", regexp.QuoteMeta(hookStartMarker), regexp.QuoteMeta(hookEndMarker)))
-	updatedContent := re.ReplaceAllString(string(existingContent), "")
-
-	// Write updated content back to the file
-	if err := os.WriteFile(hookPath, []byte(updatedContent), 0o755); err != nil {
-		return fmt.Errorf("failed to write hook content: %w", err)
-	}
-
-	return nil
-}
 
 func generateHookScript(binaryPath, binaryName string) string {
 	return fmt.Sprintf(`%s

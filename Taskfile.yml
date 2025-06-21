@@ -149,7 +149,7 @@ tasks:
   lint:
     desc: "Run linters"
     cmds:
-      - golangci-lint run --fast --timeout=5m ./...
+      - golangci-lint run --timeout=5m ./...
     sources:
       - "**/*.go"
 

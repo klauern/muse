@@ -112,9 +112,9 @@ The response should be a valid JSON object matching this schema:
 			return CommitTemplate{}, err
 		}
 		return CommitTemplate{
-				Template: finalTemplate,
-				Schema:   jsonschema.Reflect(schema),
-			}, nil
+			Template: finalTemplate,
+			Schema:   jsonschema.Reflect(schema),
+		}, nil
 	}
 
 	switch templateType {
