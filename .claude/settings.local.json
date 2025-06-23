@@ -25,7 +25,8 @@
       "Bash(./cmd/muse/muse prepare-commit-msg:*)",
       "mcp__sequential-thinking__sequentialthinking",
       "Bash(cat:*)",
-      "Bash(MUSE_VERBOSE=true /Users/nklauer/go/bin/muse prepare-commit-msg .git/COMMIT_EDITMSG)"
+      "Bash(MUSE_VERBOSE=true /Users/nklauer/go/bin/muse prepare-commit-msg .git/COMMIT_EDITMSG)",
+      "Bash(./dist/muse:*)"
     ],
     "deny": []
   }
