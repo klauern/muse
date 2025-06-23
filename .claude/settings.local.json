@@ -20,7 +20,12 @@
       "Bash(go:*)",
       "Bash(mv:*)",
       "Bash(mkdir:*)",
-      "Bash(touch:*)"
+      "Bash(touch:*)",
+      "Bash(env)",
+      "Bash(./cmd/muse/muse prepare-commit-msg:*)",
+      "mcp__sequential-thinking__sequentialthinking",
+      "Bash(cat:*)",
+      "Bash(MUSE_VERBOSE=true /Users/nklauer/go/bin/muse prepare-commit-msg .git/COMMIT_EDITMSG)"
     ],
     "deny": []
   }

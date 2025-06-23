@@ -1,3 +1,10 @@
+Analyze the following git diff and generate a conventional commit message:
+
+```
+{{.Diff}}
+```
+
+The commit message should follow this format:
 <type>[optional scope]: <description>
 
 [optional body]
@@ -10,3 +17,8 @@ Where:
 - <description> is a short summary in the present tense
 - <body> provides additional context (optional)
 - <footer> mentions any breaking changes or closed issues (optional)
+
+Please generate a commit message following this format.
+
+The response should be a valid JSON object matching this schema:
+{{.Schema}}
