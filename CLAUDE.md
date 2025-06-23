@@ -53,6 +53,7 @@ task test:config
 task test:llm
 task test:hooks
 task test:templates
+task test:rag
 ```
 
 ### Version Management
@@ -106,3 +107,7 @@ Each LLM provider has its own configuration block under `llm.config` with provid
 - The `templates` package uses JSON Schema reflection for OpenAI structured outputs
 - Git diff analysis happens via `git diff --cached` to analyze staged changes
 - The hook system supports preview mode for user approval and dry-run mode for testing
+
+## Development Best Practices
+
+- Always update workbooks/md files when implementing changes
