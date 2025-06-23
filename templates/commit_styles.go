@@ -1,9 +1,7 @@
 package templates
 
 import (
-	"bytes"
 	"fmt"
-	"log/slog"
 	"text/template"
 
 	"github.com/invopop/jsonschema"
@@ -55,116 +53,65 @@ func NewTemplateManager(diff string, style CommitStyle) *TemplateManager {
 	}
 }
 
-// CompileTemplate compiles a specific commit template at runtime
+// CompileTemplate compiles a specific commit template using single-pass compilation with caching
 func (tm *TemplateManager) CompileTemplate(templateType CommitStyle) (CommitTemplate, error) {
-	// Create a template with function map
-	funcMap := template.FuncMap{
-		// Add any functions you need here
-		"secrets": func() string { return "" }, // Or implement proper secrets handling
+	// Check cache first
+	if tmpl, schema, exists := GetRegistry().Get(string(templateType)); exists {
+		return CommitTemplate{Template: tmpl, Schema: schema}, nil
 	}
 
-	commonFormat := `
-Analyze the following git diff and generate a {{.Type}} commit message:
-
-'''
-{{.Diff}}
-'''
-
-The commit message should follow this format:
-{{.Format}}
-
-Where:
-
-{{.Details}}
-
-Please generate a commit message following this format{{.Extra}}.
-
-The response should be a valid JSON object matching this schema:
-{{.Schema}}
-`
-
-	createTemplate := func(name, typ, format, details, extra string, schema any) (CommitTemplate, error) {
-		// Create template with function map
-		tmpl, err := template.New(name).Funcs(funcMap).Parse(commonFormat)
-		if err != nil {
-			slog.Error("Failed to parse template", "error", err)
-			return CommitTemplate{}, err
-		}
-		// Pass dynamic data into the template
-		data := map[string]interface{}{
-			"Type":    typ,
-			"Diff":    tm.diff,
-			"Format":  format,
-			"Details": details,
-			"Extra":   extra,
-			"Schema":  schema,
-		}
-		var buf bytes.Buffer
-		err = tmpl.Execute(&buf, data)
-		if err != nil {
-			slog.Error("Failed to execute template", "error", err)
-			return CommitTemplate{}, err
-		}
-		// Create final template with function map as well
-		finalTemplate, err := template.New(name + "_final").Funcs(funcMap).Parse(buf.String())
-		if err != nil {
-			slog.Error("Failed to parse template", "error", err)
-			return CommitTemplate{}, err
-		}
-		return CommitTemplate{
-			Template: finalTemplate,
-			Schema:   jsonschema.Reflect(schema),
-		}, nil
+	// Load template from file (not hardcoded strings)
+	templateFile := fmt.Sprintf("styles/%s.tmpl", templateType)
+	templateContent, err := ReadTemplateFile(templateFile)
+	if err != nil {
+		return CommitTemplate{}, fmt.Errorf("failed to read template file %s: %w", templateFile, err)
 	}
 
-	switch templateType {
-	case "default":
-		return createTemplate(
-			"default",
-			"",
-			"<type>(<scope>): <subject>\n\n<body>\n\n<footer>",
-			`- <type> is one of: feat, fix, docs, style, refactor, test, chore
-- <scope> is optional and represents the module affected; generally small (deps, ci, etc)
-- <subject> is a short description in the present tense
-- <body> provides additional context (optional)
-- <footer> mentions any breaking changes or closed issues (optional)`,
-			"",
-			ConventionalCommit{},
-		)
-	case "conventional":
-		return createTemplate(
-			"conventional",
-			"conventional",
-			"<type>[optional scope]: <description>\n\n[optional body]\n\n[optional footer(s)]",
-			`- <type> is one of: feat, fix, docs, style, refactor, test, chore, etc.
-- <scope> is optional and represents the module affected; generally small (deps, ci, etc)
-- <description> is a short summary in the present tense
-- <body> provides additional context (optional)
-- <footer> mentions any breaking changes or closed issues (optional)`,
-			"",
-			ConventionalCommit{},
-		)
-	case "gitmojis":
-		return createTemplate(
-			"gitmojis",
-			"gitmoji",
-			"<gitmoji> <type>[optional scope]: <subject>\n\n<body>\n\n<footer>",
-			`- <gitmoji> is an appropriate emoji for the change (e.g., 🐛 for bug fixes, ✨ for new features)
-- <type> is one of: feat (✨), fix (🐛), docs (📝), style (💄), refactor (♻️), test (✅), chore (🔧), etc.
-- <scope> is optional and represents the module affected; generally small (deps, ci, etc)
-- <subject> is a short description in the present tense
-- <body> provides additional context (optional)
-- <footer> mentions any breaking changes or closed issues (optional)`,
-			", choosing an appropriate gitmoji",
-			GitmojiCommitSchema{},
-		)
+	// Single compilation with safe function map
+	tmpl, err := template.New(string(templateType)).
+		Funcs(SafeFuncMap()).
+		Parse(templateContent)
+	if err != nil {
+		return CommitTemplate{}, fmt.Errorf("failed to parse template: %w", err)
+	}
+
+	// Generate schema for the commit style
+	schema := tm.generateSchemaForStyle(templateType)
+
+	// Cache for future use
+	GetRegistry().Set(string(templateType), tmpl, schema)
+
+	return CommitTemplate{Template: tmpl, Schema: schema}, nil
+}
+
+// generateSchemaForStyle generates the appropriate schema for a commit style
+func (tm *TemplateManager) generateSchemaForStyle(style CommitStyle) *jsonschema.Schema {
+	reflector := jsonschema.Reflector{
+		AllowAdditionalProperties: false,
+		DoNotReference:            true,
+	}
+
+	switch style {
+	case "gitmoji", "gitmojis":
+		return reflector.Reflect(GitmojiCommitSchema{})
 	default:
-		slog.Error("Unknown template type", "type", templateType)
-		return CommitTemplate{}, fmt.Errorf("unknown template type: %s", templateType)
+		return reflector.Reflect(ConventionalCommit{})
 	}
 }
 
-var CommitStyleTemplateSchema = GenerateSchema[ConventionalCommit]()
+// GetTemplateData prepares the data for template execution
+func (tm *TemplateManager) GetTemplateData() map[string]interface{} {
+	// Sanitize diff input to prevent template injection
+	sanitizedDiff := sanitizeTemplateInput(tm.diff)
+
+	// Generate schema for the current style
+	schema := tm.generateSchemaForStyle(tm.style)
+
+	return map[string]interface{}{
+		"Diff":   sanitizedDiff,
+		"Schema": schema,
+	}
+}
 
 // GenerateSchema generates a JSON schema for a given type, adhering to the subset of JSON Schema supported by OpenAI's structured outputs.
 func GenerateSchema[T any]() any {

@@ -1,0 +1,24 @@
+Analyze the following git diff and generate a commit message:
+
+```
+{{.Diff}}
+```
+
+The commit message should follow this format:
+<type>(<scope>): <subject>
+
+<body>
+
+<footer>
+
+Where:
+- <type> is one of: feat, fix, docs, style, refactor, test, chore
+- <scope> is optional and represents the module affected; generally small (deps, ci, etc)
+- <subject> is a short description in the present tense
+- <body> provides additional context (optional)
+- <footer> mentions any breaking changes or closed issues (optional)
+
+Please generate a commit message following this format.
+
+The response should be a valid JSON object matching this schema:
+{{.Schema}}

@@ -5,11 +5,12 @@ import (
 	"fmt"
 	"log/slog"
 	"os"
-	"os/exec"
 	"time"
 
 	"github.com/briandowns/spinner"
 	"github.com/klauern/muse/config"
+	"github.com/klauern/muse/internal/fileops"
+	"github.com/klauern/muse/internal/git"
 	"github.com/klauern/muse/llm"
 	"github.com/urfave/cli/v2"
 )
@@ -116,15 +117,22 @@ func shouldSkipHook(commitSource string) bool {
 }
 
 func getGitDiff() (string, error) {
-	slog.Debug("Executing git diff command")
-	cmd := exec.Command("git", "diff", "--cached")
-	output, err := cmd.Output()
+	slog.Debug("Getting staged diff using secure Git operations")
+
+	gitOps, err := git.NewGitOperations("")
 	if err != nil {
-		slog.Error("Failed to execute git diff command", "error", err)
-		return "", err
+		slog.Error("Failed to initialize git operations", "error", err)
+		return "", fmt.Errorf("failed to initialize git operations: %w", err)
 	}
-	slog.Debug("Git diff command executed successfully", "output_length", len(output))
-	return string(output), nil
+
+	diff, err := gitOps.GetStagedDiff()
+	if err != nil {
+		slog.Error("Failed to get staged diff", "error", err)
+		return "", fmt.Errorf("failed to get staged diff: %w", err)
+	}
+
+	slog.Debug("Staged diff retrieved successfully", "output_length", len(diff))
+	return diff, nil
 }
 
 func generateCommitMessage(cfg *config.Config, diff string) (string, error) {
@@ -159,7 +167,7 @@ func generateCommitMessage(cfg *config.Config, diff string) (string, error) {
 }
 
 func writeCommitMessage(commitMsgFile, message string) error {
-	if err := os.WriteFile(commitMsgFile, []byte(message), 0o644); err != nil {
+	if err := fileops.SafeWriteFile(commitMsgFile, []byte(message), 0o644); err != nil {
 		slog.Error("Failed to write commit message", "error", err)
 		return fmt.Errorf("failed to write commit message: %w", err)
 	}

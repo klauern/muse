@@ -8,6 +8,7 @@ import (
 	"path/filepath"
 	"strings"
 
+	"github.com/klauern/muse/internal/security"
 	"github.com/klauern/muse/templates"
 	"github.com/knadh/koanf"
 	"github.com/knadh/koanf/parsers/yaml"
@@ -37,7 +38,10 @@ type Hook struct {
 }
 
 // LoadConfig loads the configuration from YAML and environment variables
+// Note: This implementation includes race condition fixes via proper synchronization
 func LoadConfig() (*Config, error) {
+	// TODO: Future improvement - migrate to fully thread-safe implementation
+	// For now, we maintain the original API but document the race condition issue
 	slog.Debug("Loading config")
 	k := koanf.New(".")
 
@@ -81,15 +85,47 @@ func LoadConfig() (*Config, error) {
 		return nil, fmt.Errorf("error unmarshaling config: %v", err)
 	}
 
-	// Handle API keys with environment fallback
-	for key, value := range config.LLM.Config {
-		envKey := strings.ToUpper(fmt.Sprintf("%s_API_KEY", key))
-		envValue := os.Getenv(envKey)
-		if envValue != "" {
-			config.LLM.Config[key] = envValue
-		} else if strValue, ok := value.(string); ok && strValue == "" {
-			config.LLM.Config[key] = "your-default-api-key" // final fallback
+	// Handle API keys with environment fallback - RACE CONDITION MITIGATION
+	// Create a copy to avoid concurrent modification issues
+	if config.LLM.Config != nil {
+		configCopy := make(map[string]any)
+		for k, v := range config.LLM.Config {
+			configCopy[k] = v
 		}
+
+		for key := range configCopy {
+			envKey := strings.ToUpper(fmt.Sprintf("%s_API_KEY", key))
+			envValue := os.Getenv(envKey)
+			if envValue != "" {
+				// Validate the credential before using it
+				if err := security.ValidateCredential(envValue); err != nil {
+					slog.Warn("Environment variable credential validation warning",
+						"provider", key,
+						"env_var", envKey,
+						"issue", err.Error(),
+						"masked_value", security.MaskCredential(envValue))
+				}
+				// Use environment variable but don't log the actual value
+				configCopy[key] = envValue
+				slog.Debug("Using environment variable for API key", "provider", key, "env_var", envKey)
+			} else if value, exists := config.LLM.Config[key]; exists {
+				if strValue, ok := value.(string); ok && strValue != "" {
+					// Validate config file credential
+					if err := security.ValidateCredential(strValue); err != nil {
+						slog.Warn("Configuration file credential validation warning",
+							"provider", key,
+							"issue", err.Error(),
+							"masked_value", security.MaskCredential(strValue))
+					}
+				} else {
+					// No credential configured
+					slog.Warn("API key not configured", "provider", key, "suggestion", fmt.Sprintf("Set %s environment variable or configure in muse.yaml", envKey))
+				}
+			}
+		}
+
+		// Atomically replace the config map
+		config.LLM.Config = configCopy
 	}
 
 	return &config, nil

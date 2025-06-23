@@ -1,0 +1,25 @@
+Analyze the following git diff and generate a gitmoji commit message:
+
+```
+{{.Diff}}
+```
+
+The commit message should follow this format:
+<gitmoji> <type>[optional scope]: <subject>
+
+<body>
+
+<footer>
+
+Where:
+- <gitmoji> is an appropriate emoji for the change (e.g., 🐛 for bug fixes, ✨ for new features)
+- <type> is one of: feat (✨), fix (🐛), docs (📝), style (💄), refactor (♻️), test (✅), chore (🔧), etc.
+- <scope> is optional and represents the module affected; generally small (deps, ci, etc)
+- <subject> is a short description in the present tense
+- <body> provides additional context (optional)
+- <footer> mentions any breaking changes or closed issues (optional)
+
+Please generate a commit message following this format, choosing an appropriate gitmoji.
+
+The response should be a valid JSON object matching this schema:
+{{.Schema}}

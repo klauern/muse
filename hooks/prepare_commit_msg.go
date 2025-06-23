@@ -4,10 +4,12 @@ import (
 	"context"
 	"fmt"
 	"log/slog"
-	"os"
-	"os/exec"
+	"strings"
 
 	"github.com/klauern/muse/config"
+	"github.com/klauern/muse/internal/fileops"
+	"github.com/klauern/muse/internal/git"
+	"github.com/klauern/muse/internal/userinput"
 	"github.com/klauern/muse/llm"
 )
 
@@ -51,39 +53,57 @@ func (h *LLMHook) Run(commitMsgFile string, commitSource string, sha1 string) er
 	if h.Config.Hook.Preview {
 		fmt.Println("Preview mode: Generated commit message:")
 		fmt.Println(message)
-		fmt.Print("Do you want to use this commit message? (y/n): ")
-		var response string
-		_, err := fmt.Scanln(&response)
+
+		// Use secure input handler with timeout and validation
+		inputHandler := userinput.NewSecureInputHandler()
+		accepted, err := inputHandler.PromptYesNo(ctx, "Do you want to use this commit message? (y/n): ")
 		if err != nil {
 			slog.Error("Failed to read user input", "error", err)
 			return fmt.Errorf("failed to read user input: %w", err)
 		}
-		if response != "y" && response != "Y" {
-			slog.Error("User rejected the generated commit message")
+
+		if !accepted {
+			slog.Info("User rejected the generated commit message")
 			return fmt.Errorf("user rejected the generated commit message")
 		}
 	}
 
-	// Write the generated message to the commit message file
-	if err := os.WriteFile(commitMsgFile, []byte(message), 0o644); err != nil {
+	// Debug: Log the message content and length
+	slog.Debug("Generated commit message", "message", message, "length", len(message))
+	
+	// Check if message is empty or whitespace-only
+	trimmedMessage := strings.TrimSpace(message)
+	if len(trimmedMessage) == 0 {
+		slog.Error("Generated commit message is empty or whitespace-only", "original", message)
+		return fmt.Errorf("generated commit message is empty or whitespace-only")
+	}
+
+	// Write the generated message to the commit message file atomically
+	if err := fileops.SafeWriteFile(commitMsgFile, []byte(message), 0o644); err != nil {
 		slog.Error("Failed to write commit message", "error", err)
 		return fmt.Errorf("failed to write commit message: %w", err)
 	}
 
-	fmt.Println("Commit message successfully generated and saved.")
+	slog.Info("Commit message successfully generated and saved", "message", message)
 
 	return nil
 }
 
+// getGitDiff safely retrieves staged changes using our secure Git operations
 func getGitDiff() (string, error) {
-	// Get the staged changes
-	cmd := exec.Command("git", "diff", "--cached")
-	output, err := cmd.Output()
+	gitOps, err := git.NewGitOperations("")
 	if err != nil {
-		slog.Error("Failed to execute git diff command", "error", err)
-		return "", err
+		slog.Error("Failed to initialize git operations", "error", err)
+		return "", fmt.Errorf("failed to initialize git operations: %w", err)
 	}
-	return string(output), nil
+
+	diff, err := gitOps.GetStagedDiff()
+	if err != nil {
+		slog.Error("Failed to get staged diff", "error", err)
+		return "", fmt.Errorf("failed to get staged diff: %w", err)
+	}
+
+	return diff, nil
 }
 
 func NewHook(cfg *config.Config) (PrepareCommitMsgHook, error) {
