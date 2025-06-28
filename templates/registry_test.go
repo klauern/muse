@@ -26,16 +26,16 @@ func TestTemplateRegistry_Basic(t *testing.T) {
 
 	// Test set and get
 	registry.Set("test", tmpl, schema)
-	
+
 	gotTmpl, gotSchema, exists := registry.Get("test")
 	if !exists {
 		t.Error("should find template after setting")
 	}
-	
+
 	if gotTmpl != tmpl {
 		t.Error("should return the same template instance")
 	}
-	
+
 	if gotSchema != schema {
 		t.Error("should return the same schema instance")
 	}
@@ -51,7 +51,7 @@ func TestTemplateRegistry_ThreadSafety(t *testing.T) {
 	const iterations = 100
 
 	var wg sync.WaitGroup
-	
+
 	// Concurrent writes
 	wg.Add(goroutines)
 	for i := 0; i < goroutines; i++ {
@@ -84,7 +84,7 @@ func TestTemplateRegistry_ThreadSafety(t *testing.T) {
 	tmpl := template.New("final_test")
 	schema := &jsonschema.Schema{Title: "final_test"}
 	registry.Set("final_test", tmpl, schema)
-	
+
 	gotTmpl, gotSchema, exists := registry.Get("final_test")
 	if !exists || gotTmpl != tmpl || gotSchema != schema {
 		t.Error("registry should be functional after concurrent access")
@@ -127,7 +127,7 @@ func TestTemplateRegistry_Clear(t *testing.T) {
 func TestGetRegistry_Singleton(t *testing.T) {
 	// Should return the same instance
 	registry1 := GetRegistry()
-	registry2 := GetRegistry() 
+	registry2 := GetRegistry()
 
 	if registry1 != registry2 {
 		t.Error("GetRegistry should return the same singleton instance")
@@ -136,9 +136,9 @@ func TestGetRegistry_Singleton(t *testing.T) {
 	// Test that it's functional
 	tmpl := template.New("singleton_test")
 	schema := &jsonschema.Schema{Title: "singleton_test"}
-	
+
 	registry1.Set("singleton_test", tmpl, schema)
-	
+
 	gotTmpl, gotSchema, exists := registry2.Get("singleton_test")
 	if !exists || gotTmpl != tmpl || gotSchema != schema {
 		t.Error("global registry should be shared across calls")

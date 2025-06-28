@@ -70,7 +70,7 @@ func (h *LLMHook) Run(commitMsgFile string, commitSource string, sha1 string) er
 
 	// Debug: Log the message content and length
 	slog.Debug("Generated commit message", "message", message, "length", len(message))
-	
+
 	// Check if message is empty or whitespace-only
 	trimmedMessage := strings.TrimSpace(message)
 	if len(trimmedMessage) == 0 {
