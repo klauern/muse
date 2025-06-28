@@ -153,7 +153,7 @@ func TestValidateFilePath(t *testing.T) {
 		{
 			name:      "valid absolute path",
 			path:      "/tmp/test.txt",
-			wantError: true, // /tmp is considered suspicious
+			wantError: false, // /tmp is allowed for Git hooks
 		},
 		{
 			name:      "empty path",
@@ -224,7 +224,7 @@ func TestContainsSuspiciousPatterns(t *testing.T) {
 		{
 			name:     "tmp directory",
 			path:     "/tmp/malicious.sh",
-			expected: true,
+			expected: false, // /tmp is allowed for Git hooks
 		},
 		{
 			name:     "home shortcut",

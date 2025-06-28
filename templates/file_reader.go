@@ -24,13 +24,13 @@ func ListTemplateFiles() ([]string, error) {
 	if err != nil {
 		return nil, fmt.Errorf("failed to read template directory: %w", err)
 	}
-	
+
 	var files []string
 	for _, entry := range entries {
 		if !entry.IsDir() && entry.Name()[len(entry.Name())-5:] == ".tmpl" {
 			files = append(files, entry.Name())
 		}
 	}
-	
+
 	return files, nil
 }

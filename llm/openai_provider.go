@@ -133,13 +133,13 @@ func (s *OpenAIService) GenerateCommitMessage(ctx context.Context, diff string, 
 // executeTemplate executes the template with data to generate the final prompt
 func (s *OpenAIService) executeTemplate(commitTemplate templates.CommitTemplate, templateManager *templates.TemplateManager) (string, error) {
 	data := templateManager.GetTemplateData()
-	
+
 	var buf strings.Builder
 	err := commitTemplate.Template.Execute(&buf, data)
 	if err != nil {
 		return "", fmt.Errorf("failed to execute template: %w", err)
 	}
-	
+
 	return buf.String(), nil
 }
 
@@ -356,7 +356,7 @@ func (s *OpenAIService) extractCommitMessage(content string) string {
 	var jsonData map[string]interface{}
 	if err := json.Unmarshal([]byte(content), &jsonData); err == nil {
 		slog.Debug("Successfully parsed JSON response", "keys", getJSONKeys(jsonData))
-		
+
 		// Handle structured commit format: {"type": "feat", "scope": "api", "subject": "...", "body": "..."}
 		if commitType, hasType := jsonData["type"].(string); hasType {
 			if subject, hasSubject := jsonData["subject"].(string); hasSubject {
@@ -365,32 +365,32 @@ func (s *OpenAIService) extractCommitMessage(content string) string {
 					message += "(" + scope + ")"
 				}
 				message += ": " + subject
-				
+
 				if body, hasBody := jsonData["body"].(string); hasBody && body != "" {
 					message += "\n\n" + body
 				}
-				
+
 				if footer, hasFooter := jsonData["footer"].(string); hasFooter && footer != "" {
 					message += "\n\n" + footer
 				}
-				
+
 				slog.Debug("Built commit message from structured format", "message", message)
 				return strings.TrimSpace(message)
 			}
 		}
-		
+
 		// Handle legacy commit_message format
 		if msg, ok := jsonData["commit_message"].(string); ok {
 			return strings.TrimSpace(msg)
 		}
 	} else {
 		slog.Debug("Failed to parse as complete JSON, checking for truncated response", "error", err)
-		
+
 		// Try to handle truncated JSON by attempting to fix common issues
 		if fixedContent := s.tryFixTruncatedJSON(content); fixedContent != content {
 			if err := json.Unmarshal([]byte(fixedContent), &jsonData); err == nil {
 				slog.Debug("Successfully parsed fixed JSON response", "keys", getJSONKeys(jsonData))
-				
+
 				// Handle structured commit format from fixed JSON
 				if commitType, hasType := jsonData["type"].(string); hasType {
 					if subject, hasSubject := jsonData["subject"].(string); hasSubject {
@@ -399,11 +399,11 @@ func (s *OpenAIService) extractCommitMessage(content string) string {
 							message += "(" + scope + ")"
 						}
 						message += ": " + subject
-						
+
 						if body, hasBody := jsonData["body"].(string); hasBody && body != "" {
 							message += "\n\n" + body
 						}
-						
+
 						slog.Debug("Built commit message from fixed truncated JSON", "message", message)
 						return strings.TrimSpace(message)
 					}
@@ -437,7 +437,7 @@ func (s *OpenAIService) extractCommitMessage(content string) string {
 
 		if err := json.Unmarshal([]byte(jsonStr), &jsonData); err == nil {
 			slog.Debug("Successfully parsed markdown-wrapped JSON", "keys", getJSONKeys(jsonData))
-			
+
 			// Handle structured commit format from markdown-wrapped JSON
 			if commitType, hasType := jsonData["type"].(string); hasType {
 				if subject, hasSubject := jsonData["subject"].(string); hasSubject {
@@ -446,20 +446,20 @@ func (s *OpenAIService) extractCommitMessage(content string) string {
 						message += "(" + scope + ")"
 					}
 					message += ": " + subject
-					
+
 					if body, hasBody := jsonData["body"].(string); hasBody && body != "" {
 						message += "\n\n" + body
 					}
-					
+
 					if footer, hasFooter := jsonData["footer"].(string); hasFooter && footer != "" {
 						message += "\n\n" + footer
 					}
-					
+
 					slog.Debug("Built commit message from markdown-wrapped JSON", "message", message)
 					return strings.TrimSpace(message)
 				}
 			}
-			
+
 			// Handle legacy commit_message format in markdown
 			if msg, ok := jsonData["commit_message"].(string); ok {
 				return strings.TrimSpace(msg)
@@ -508,17 +508,17 @@ func getJSONKeys(data map[string]interface{}) []string {
 // tryFixTruncatedJSON attempts to fix common truncation issues in JSON responses
 func (s *OpenAIService) tryFixTruncatedJSON(content string) string {
 	content = strings.TrimSpace(content)
-	
+
 	// If it looks like truncated JSON, try to close it properly
 	if strings.HasPrefix(content, "{") && !strings.HasSuffix(content, "}") {
 		// Count open/close braces to see if we need to close
 		openBraces := strings.Count(content, "{")
 		closeBraces := strings.Count(content, "}")
-		
+
 		if openBraces > closeBraces {
 			// Try to add missing closing braces and quotes
 			fixed := content
-			
+
 			// Handle common truncation patterns
 			if strings.HasSuffix(fixed, ",\n  \"") {
 				// Truncated in the middle of a field name, remove the incomplete part
@@ -552,7 +552,7 @@ func (s *OpenAIService) tryFixTruncatedJSON(content string) string {
 					fixed = fixed[:lastCommaIndex]
 				}
 			}
-			
+
 			// If the last character isn't a quote or brace, add a quote if needed
 			if !strings.HasSuffix(fixed, "\"") && !strings.HasSuffix(fixed, "}") && !strings.HasSuffix(fixed, ",") {
 				// Check if we're in the middle of a string value
@@ -565,16 +565,16 @@ func (s *OpenAIService) tryFixTruncatedJSON(content string) string {
 					}
 				}
 			}
-			
+
 			// Add missing closing braces
 			for i := 0; i < (openBraces - closeBraces); i++ {
 				fixed += "}"
 			}
-			
+
 			slog.Debug("Attempting to fix truncated JSON", "original", content, "fixed", fixed)
 			return fixed
 		}
 	}
-	
+
 	return content
 }

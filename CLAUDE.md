@@ -53,7 +53,7 @@ task test:config
 task test:llm
 task test:hooks
 task test:templates
-task test:rag
+task test:memory
 ```
 
 ### Version Management
@@ -101,13 +101,36 @@ The configuration supports multiple commit styles:
 
 Each LLM provider has its own configuration block under `llm.config` with provider-specific settings like API keys, model selection, and API base URLs.
 
+### Internal Architecture
+
+**Internal Utilities (`internal/`)**: Core internal packages that provide foundational functionality:
+- `security/`: Credential validation and masking to prevent API key exposure
+- `git/`: Safe Git operations with proper error handling
+- `userinput/`: Secure user input handling with validation
+- `fileops/`: Atomic file operations for safe config management
+
+**Memory Bank (`memory-bank/`)**: Project documentation and context storage for maintaining project history and decision records.
+
+### Key Dependencies
+
+- **CLI Framework**: `urfave/cli/v2` for command-line interface
+- **Configuration**: `koanf/koanf` for configuration management with YAML and env support
+- **LLM Integration**: `openai/openai-go` for OpenAI API integration with structured outputs
+- **JSON Schema**: `invopop/jsonschema` for structured output validation
+- **UI Elements**: `briandowns/spinner` for loading indicators during API calls
+
 ### Important Development Notes
 
 - Integration tests require valid API keys set as environment variables
 - The `templates` package uses JSON Schema reflection for OpenAI structured outputs
 - Git diff analysis happens via `git diff --cached` to analyze staged changes
 - The hook system supports preview mode for user approval and dry-run mode for testing
+- Thread-safe template caching is implemented in the template registry
+- Never use `testify/assert` in tests (use standard Go testing patterns)
 
 ## Development Best Practices
 
-- Always update workbooks/md files when implementing changes
+- Always update memory-bank/md files when implementing changes
+- Use the provider registry pattern when adding new LLM providers
+- Ensure all credential handling goes through the security package
+- Template changes should include JSON Schema validation updates
